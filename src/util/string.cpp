@@ -88,30 +88,16 @@ static bool convert(iconv_t cd, char *outbuf, size_t *outbuf_size,
 	return true;
 }
 
-#ifdef __ANDROID__
 // select right encoding for wchar_t size
-// On Android iconv disagrees how big a wchar_t is for whatever reason
 constexpr auto DEFAULT_ENCODING = ([] () -> const char* {
-const char *DEFAULT_ENCODING = "UTF-32LE";
 	constexpr auto sz = sizeof(wchar_t);
-#elif defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 	static_assert(sz == 2 || sz == 4, "Unexpected wide char size");
-	// NetBSD does not allow "WCHAR_T" as a charset input to iconv.
 	if constexpr (sz == 2) {
-	#include <sys/endian.h>
 		return (BYTE_ORDER == BIG_ENDIAN) ? "UTF-16BE" : "UTF-16LE";
-	#if BYTE_ORDER == BIG_ENDIAN
 	} else {
-	const char *DEFAULT_ENCODING = "UTF-32BE";
 		return (BYTE_ORDER == BIG_ENDIAN) ? "UTF-32BE" : "UTF-32LE";
-	#else
 	}
-	const char *DEFAULT_ENCODING = "UTF-32LE";
 })();
-	#endif
-#else
-const char *DEFAULT_ENCODING = "WCHAR_T";
-#endif
 
 std::wstring utf8_to_wide(const std::string &input)
 {

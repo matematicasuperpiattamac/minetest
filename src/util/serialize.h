@@ -21,11 +21,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "irrlichttypes_bloated.h"
 #include "exceptions.h" // for SerializationError
-#include "debug.h" // for assert
 #include "ieee_float.h"
 
 #include "config.h"
 #include <cstring> // for memcpy
+#include <cassert>
 #include <iostream>
 #include <string>
 #include <vector>
