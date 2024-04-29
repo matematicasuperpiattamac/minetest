@@ -30,6 +30,7 @@ public:
 	void runTests(IGameDef *gamedef);
 
 	void testInit();
+	void testFlagSetters();
 	void testInfoText();
 	void testStatusText();
 };
@@ -39,6 +40,7 @@ static TestGameUI g_test_instance;
 void TestGameUI::runTests(IGameDef *gamedef)
 {
 	TEST(testInit);
+	TEST(testFlagSetters);
 	TEST(testInfoText);
 	TEST(testStatusText);
 }
@@ -49,16 +51,28 @@ void TestGameUI::testInit()
 	// Ensure flags on GameUI init
 	UASSERT(gui.getFlags().show_chat)
 	UASSERT(gui.getFlags().show_hud)
+	UASSERT(!gui.getFlags().show_minimap)
 	UASSERT(!gui.getFlags().show_profiler_graph)
 
 	// And after the initFlags init stage
 	gui.initFlags();
 	UASSERT(gui.getFlags().show_chat)
 	UASSERT(gui.getFlags().show_hud)
+	UASSERT(!gui.getFlags().show_minimap)
 	UASSERT(!gui.getFlags().show_profiler_graph)
 
 	// @TODO verify if we can create non UI nulldevice to test this function
 	// gui.init();
+}
+
+void TestGameUI::testFlagSetters()
+{
+	GameUI gui{};
+	gui.showMinimap(true);
+	UASSERT(gui.getFlags().show_minimap);
+
+	gui.showMinimap(false);
+	UASSERT(!gui.getFlags().show_minimap);
 }
 
 void TestGameUI::testStatusText()

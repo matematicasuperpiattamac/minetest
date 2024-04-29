@@ -46,6 +46,7 @@ struct PipelineContext
 	v2u32 target_size;
 
 	bool show_hud {true};
+	bool show_minimap {true};
 	bool draw_wield_tool {true};
 	bool draw_crosshair {true};
 };

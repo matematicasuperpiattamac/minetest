@@ -47,7 +47,6 @@ FlagDesc flagdesc_mapgen_v6[] = {
 	{"snowbiomes", MGV6_SNOWBIOMES},
 	{"flat",       MGV6_FLAT},
 	{"trees",      MGV6_TREES},
-	{"temples",    MGV6_TEMPLES},
 	{NULL,         0}
 };
 
@@ -226,8 +225,7 @@ void MapgenV6Params::writeParams(Settings *settings) const
 void MapgenV6Params::setDefaultSettings(Settings *settings)
 {
 	settings->setDefault("mgv6_spflags", flagdesc_mapgen_v6, MGV6_JUNGLES |
-		MGV6_SNOWBIOMES | MGV6_TREES | MGV6_BIOMEBLEND | MGV6_MUDFLOW |
-		MGV6_TEMPLES);
+		MGV6_SNOWBIOMES | MGV6_TREES | MGV6_BIOMEBLEND | MGV6_MUDFLOW);
 }
 
 
@@ -580,8 +578,7 @@ void MapgenV6::makeChunk(BlockMakeData *data)
 			dp.np_alt_wall
 				= NoiseParams(-0.4, 1.0, v3f(40.0, 40.0, 40.0), 32474, 6, 1.1, 2.0);
 
-			if ((spflags & MGV6_TEMPLES) &&
-					getBiome(0, v2s16(node_min.X, node_min.Z)) == BT_DESERT) {
+			if (getBiome(0, v2s16(node_min.X, node_min.Z)) == BT_DESERT) {
 				dp.c_wall              = c_desert_stone;
 				dp.c_alt_wall          = CONTENT_IGNORE;
 				dp.c_stair             = c_stair_desert_stone;

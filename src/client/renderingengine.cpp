@@ -19,7 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include <optional>
-#include <irrlicht.h>
+#include <IrrlichtDevice.h>
 #include "fontengine.h"
 #include "client.h"
 #include "clouds.h"
@@ -44,87 +44,6 @@ RenderingEngine *RenderingEngine::s_singleton = nullptr;
 const video::SColor RenderingEngine::MENU_SKY_COLOR = video::SColor(255, 140, 186, 250);
 const float RenderingEngine::BASE_BLOOM_STRENGTH = 1.0f;
 
-/* Helper classes */
-
-void FpsControl::reset()
-{
-	last_time = porting::getTimeUs();
-}
-
-void FpsControl::limit(IrrlichtDevice *device, f32 *dtime, bool assume_paused)
-{
-	const float fps_limit = (device->isWindowFocused() && !assume_paused)
-			? g_settings->getFloat("fps_max")
-			: g_settings->getFloat("fps_max_unfocused");
-	const u64 frametime_min = 1000000.0f / std::max(fps_limit, 1.0f);
-
-	u64 time = porting::getTimeUs();
-
-	if (time > last_time) // Make sure time hasn't overflowed
-		busy_time = time - last_time;
-	else
-		busy_time = 0;
-
-	if (busy_time < frametime_min) {
-		sleep_time = frametime_min - busy_time;
-		if (sleep_time > 0)
-			sleep_us(sleep_time);
-	} else {
-		sleep_time = 0;
-	}
-
-	// Read the timer again to accurately determine how long we actually slept,
-	// rather than calculating it by adding sleep_time to time.
-	time = porting::getTimeUs();
-
-	if (time > last_time) // Make sure last_time hasn't overflowed
-		*dtime = (time - last_time) / 1000000.0f;
-	else
-		*dtime = 0;
-
-	last_time = time;
-}
-
-class FogShaderConstantSetter : public IShaderConstantSetter
-{
-	CachedPixelShaderSetting<float, 4> m_fog_color{"fogColor"};
-	CachedPixelShaderSetting<float> m_fog_distance{"fogDistance"};
-	CachedPixelShaderSetting<float> m_fog_shading_parameter{"fogShadingParameter"};
-
-public:
-	void onSetConstants(video::IMaterialRendererServices *services) override
-	{
-		auto *driver = services->getVideoDriver();
-		assert(driver);
-
-		video::SColor fog_color(0);
-		video::E_FOG_TYPE fog_type = video::EFT_FOG_LINEAR;
-		f32 fog_start = 0;
-		f32 fog_end = 0;
-		f32 fog_density = 0;
-		bool fog_pixelfog = false;
-		bool fog_rangefog = false;
-		driver->getFog(fog_color, fog_type, fog_start, fog_end, fog_density,
-				fog_pixelfog, fog_rangefog);
-
-		video::SColorf fog_colorf(fog_color);
-		m_fog_color.set(fog_colorf, services);
-
-		m_fog_distance.set(&fog_end, services);
-
-		float parameter = 0;
-		if (fog_end > 0)
-			parameter = 1.0f / (1.0f - fog_start / fog_end);
-		m_fog_shading_parameter.set(&parameter, services);
-	}
-};
-
-IShaderConstantSetter *FogShaderConstantSetterFactory::create()
-{
-	return new FogShaderConstantSetter();
-}
-
-/* Other helpers */
 
 static gui::GUISkin *createSkin(gui::IGUIEnvironment *environment,
 		gui::EGUI_SKIN_TYPE type, video::IVideoDriver *driver)
@@ -147,6 +66,7 @@ static gui::GUISkin *createSkin(gui::IGUIEnvironment *environment,
 	return skin;
 }
 
+
 static std::optional<video::E_DRIVER_TYPE> chooseVideoDriver()
 {
 	auto &&configured_name = g_settings->get("video_driver");
@@ -164,19 +84,13 @@ static std::optional<video::E_DRIVER_TYPE> chooseVideoDriver()
 	return std::nullopt;
 }
 
-static inline auto getVideoDriverName(video::E_DRIVER_TYPE driver)
-{
-	return RenderingEngine::getVideoDriverInfo(driver).friendly_name;
-}
-
 static irr::IrrlichtDevice *createDevice(SIrrlichtCreationParameters params, std::optional<video::E_DRIVER_TYPE> requested_driver)
 {
 	if (requested_driver) {
 		params.DriverType = *requested_driver;
-		verbosestream << "Trying video driver " << getVideoDriverName(params.DriverType) << std::endl;
 		if (auto *device = createDeviceEx(params))
 			return device;
-		errorstream << "Failed to initialize the " << getVideoDriverName(params.DriverType) << " video driver" << std::endl;
+		errorstream << "Failed to initialize the " << RenderingEngine::getVideoDriverInfo(*requested_driver).friendly_name << " video driver" << std::endl;
 	}
 	sanity_check(requested_driver != video::EDT_NULL);
 
@@ -185,15 +99,12 @@ static irr::IrrlichtDevice *createDevice(SIrrlichtCreationParameters params, std
 		if (fallback_driver == video::EDT_NULL || fallback_driver == requested_driver)
 			continue;
 		params.DriverType = fallback_driver;
-		verbosestream << "Trying video driver " << getVideoDriverName(params.DriverType) << std::endl;
 		if (auto *device = createDeviceEx(params))
 			return device;
 	}
 
 	throw std::runtime_error("Could not initialize the device with any supported video driver");
 }
-
-/* RenderingEngine class */
 
 RenderingEngine::RenderingEngine(IEventReceiver *receiver)
 {
@@ -229,8 +140,9 @@ RenderingEngine::RenderingEngine(IEventReceiver *receiver)
 	params.Stencilbuffer = false;
 	params.Vsync = vsync;
 	params.EventReceiver = receiver;
-	params.DriverDebug = g_settings->getBool("opengl_debug");
-
+#ifdef __ANDROID__
+	params.PrivateData = porting::app_global;
+#endif
 	// there is no standardized path for these on desktop
 	std::string rel_path = std::string("client") + DIR_DELIM
 			+ "shaders" + DIR_DELIM + "Irrlicht";
@@ -238,10 +150,7 @@ RenderingEngine::RenderingEngine(IEventReceiver *receiver)
 
 	m_device = createDevice(params, driverType);
 	driver = m_device->getVideoDriver();
-	verbosestream << "Using the " << getVideoDriverName(driver->getDriverType()) << " video driver" << std::endl;
-
-	// This changes the minimum allowed number of vertices in a VBO. Default is 500.
-	driver->setMinHardwareBufferVertexCount(4);
+	infostream << "Using the " << RenderingEngine::getVideoDriverInfo(driver->getDriverType()).friendly_name << " video driver" << std::endl;
 
 	s_singleton = this;
 
@@ -253,11 +162,8 @@ RenderingEngine::RenderingEngine(IEventReceiver *receiver)
 
 RenderingEngine::~RenderingEngine()
 {
-	sanity_check(s_singleton == this);
-
 	core.reset();
 	m_device->closeDevice();
-	m_device->drop();
 	s_singleton = nullptr;
 }
 
@@ -281,7 +187,10 @@ void RenderingEngine::removeMesh(const scene::IMesh* mesh)
 void RenderingEngine::cleanupMeshCache()
 {
 	auto mesh_cache = m_device->getSceneManager()->getMeshCache();
-	mesh_cache->clear();
+	while (mesh_cache->getMeshCount() != 0) {
+		if (scene::IAnimatedMesh *mesh = mesh_cache->getMeshByIndex(0))
+			mesh_cache->removeMesh(mesh);
+	}
 }
 
 bool RenderingEngine::setupTopLevelWindow()
@@ -320,17 +229,15 @@ void RenderingEngine::draw_load_screen(const std::wstring &text,
 			gui::StaticText::add(guienv, text, textrect, false, false);
 	guitext->setTextAlignment(gui::EGUIA_CENTER, gui::EGUIA_UPPERLEFT);
 
-	auto *driver = get_video_driver();
-
-	if (sky) {
-		driver->beginScene(true, true, RenderingEngine::MENU_SKY_COLOR);
-		if (g_settings->getBool("menu_clouds")) {
-			g_menuclouds->step(dtime * 3);
-			g_menucloudsmgr->drawAll();
-		}
-	} else {
-		driver->beginScene(true, true, video::SColor(255, 0, 0, 0));
-	}
+	if (sky && g_settings->getBool("menu_clouds")) {
+		g_menuclouds->step(dtime * 3);
+		g_menuclouds->render();
+		get_video_driver()->beginScene(true, true, RenderingEngine::MENU_SKY_COLOR);
+		g_menucloudsmgr->drawAll();
+	} else if (sky)
+		get_video_driver()->beginScene(true, true, RenderingEngine::MENU_SKY_COLOR);
+	else
+		get_video_driver()->beginScene(true, true, video::SColor(255, 0, 0, 0));
 
 	// draw progress bar
 	if ((percent >= 0) && (percent <= 100)) {
@@ -342,10 +249,8 @@ void RenderingEngine::draw_load_screen(const std::wstring &text,
 #ifndef __ANDROID__
 			const core::dimension2d<u32> &img_size =
 					progress_img_bg->getSize();
-			float density = g_settings->getFloat("gui_scaling", 0.5f, 20.0f) *
-					getDisplayDensity();
-			u32 imgW = rangelim(img_size.Width, 200, 600) * density;
-			u32 imgH = rangelim(img_size.Height, 24, 72) * density;
+			u32 imgW = rangelim(img_size.Width, 200, 600) * getDisplayDensity();
+			u32 imgH = rangelim(img_size.Height, 24, 72) * getDisplayDensity();
 #else
 			const core::dimension2d<u32> img_size(256, 48);
 			float imgRatio = (float)img_size.Height / img_size.Width;
@@ -375,7 +280,7 @@ void RenderingEngine::draw_load_screen(const std::wstring &text,
 	}
 
 	guienv->drawAll();
-	driver->endScene();
+	get_video_driver()->endScene();
 	guitext->remove();
 }
 
@@ -385,16 +290,15 @@ std::vector<video::E_DRIVER_TYPE> RenderingEngine::getSupportedVideoDrivers()
 	// Order by preference (best first)
 	static const video::E_DRIVER_TYPE glDrivers[] = {
 		video::EDT_OPENGL,
-		video::EDT_OPENGL3,
 		video::EDT_OGLES2,
 		video::EDT_OGLES1,
 		video::EDT_NULL,
 	};
 	std::vector<video::E_DRIVER_TYPE> drivers;
 
-	for (video::E_DRIVER_TYPE driver: glDrivers) {
-		if (IrrlichtDevice::isDriverSupported(driver))
-			drivers.push_back(driver);
+	for (u32 i = 0; i < ARRLEN(glDrivers); i++) {
+		if (IrrlichtDevice::isDriverSupported(glDrivers[i]))
+			drivers.push_back(glDrivers[i]);
 	}
 
 	return drivers;
@@ -412,9 +316,9 @@ void RenderingEngine::finalize()
 }
 
 void RenderingEngine::draw_scene(video::SColor skycolor, bool show_hud,
-		bool draw_wield_tool, bool draw_crosshair)
+		bool show_minimap, bool draw_wield_tool, bool draw_crosshair)
 {
-	core->draw(skycolor, show_hud, draw_wield_tool, draw_crosshair);
+	core->draw(skycolor, show_hud, show_minimap, draw_wield_tool, draw_crosshair);
 }
 
 const VideoDriverInfo &RenderingEngine::getVideoDriverInfo(irr::video::E_DRIVER_TYPE type)
@@ -422,7 +326,6 @@ const VideoDriverInfo &RenderingEngine::getVideoDriverInfo(irr::video::E_DRIVER_
 	static const std::unordered_map<int, VideoDriverInfo> driver_info_map = {
 		{(int)video::EDT_NULL,   {"null",   "NULL Driver"}},
 		{(int)video::EDT_OPENGL, {"opengl", "OpenGL"}},
-		{(int)video::EDT_OPENGL3, {"opengl3", "OpenGL 3+"}},
 		{(int)video::EDT_OGLES1, {"ogles1", "OpenGL ES1"}},
 		{(int)video::EDT_OGLES2, {"ogles2", "OpenGL ES2"}},
 	};

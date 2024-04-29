@@ -1,4 +1,4 @@
-Minetest Lua Mainmenu API Reference 5.9.0
+Minetest Lua Mainmenu API Reference 5.8.0
 =========================================
 
 Introduction
@@ -38,9 +38,7 @@ Functions
 ---------
 
 * `core.start()`
-  * start game session
 * `core.close()`
-  * exit engine
 * `core.get_min_supp_proto()`
   * returns the minimum supported network protocol version
 * `core.get_max_supp_proto()`
@@ -93,8 +91,8 @@ Filesystem
     registered in the core (possible in async calls)
 * `core.get_cache_path()` -> path of cache
 * `core.get_temp_path([param])` (possible in async calls)
-  * `param`=true: returns path to a newly created temporary file
-  * otherwise: returns path to a newly created temporary folder
+  * `param`=true: returns path to a temporary file
+    otherwise: returns path to the temporary folder
 
 
 HTTP Requests
@@ -251,10 +249,6 @@ GUI
       -- HUD Scaling multiplier
       -- Equal to the setting `hud_scaling` multiplied by `dpi / 96`
       real_hud_scaling = 1,
-
-      -- Whether the touchscreen controls are enabled.
-      -- Usually (but not always) `true` on Android.
-      touch_controls = false,
   }
   ```
 
@@ -319,7 +313,6 @@ Package - content which is downloadable from the content db, may or may not be i
           description      = "description",
           author           = "author",
           path             = "path/to/content",
-          textdomain = "textdomain", -- textdomain to translate title / description with
           depends          = {"mod", "names"}, -- mods only
           optional_depends = {"mod", "names"}, -- mods only
       }
@@ -337,13 +330,6 @@ Package - content which is downloadable from the content db, may or may not be i
           error_message = "",  -- message or nil
       }
       ```
-* `core.get_content_translation(path, domain, string)`
-  * Translates `string` using `domain` in content directory at `path`.
-  * Textdomains will be found by looking through all locale folders.
-  * String should contain translation markup from `core.translate(textdomain, ...)`.
-  * Ex: `core.get_content_translation("mods/mymod", "mymod", core.translate("mymod", "Hello World"))`
-    will translate "Hello World" into the current user's language
-    using `mods/mymod/locale/mymod.fr.tr`.
 
 Logging
 -------

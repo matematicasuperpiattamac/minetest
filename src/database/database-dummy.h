@@ -20,7 +20,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include <map>
-#include <set>
 #include <string>
 #include "database.h"
 #include "irrlichttypes.h"
@@ -28,7 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class Database_Dummy : public MapDatabase, public PlayerDatabase, public ModStorageDatabase
 {
 public:
-	bool saveBlock(const v3s16 &pos, std::string_view data);
+	bool saveBlock(const v3s16 &pos, const std::string &data);
 	void loadBlock(const v3s16 &pos, std::string *block);
 	bool deleteBlock(const v3s16 &pos);
 	void listAllLoadableBlocks(std::vector<v3s16> &dst);
@@ -44,7 +43,7 @@ public:
 			const std::string &key, std::string *value);
 	bool hasModEntry(const std::string &modname, const std::string &key);
 	bool setModEntry(const std::string &modname,
-			const std::string &key,std::string_view value);
+			const std::string &key, const std::string &value);
 	bool removeModEntry(const std::string &modname, const std::string &key);
 	bool removeModEntries(const std::string &modname);
 	void listMods(std::vector<std::string> *res);

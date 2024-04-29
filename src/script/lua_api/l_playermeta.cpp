@@ -59,6 +59,7 @@ void PlayerMetaRef::Register(lua_State *L)
 	// lua_register(L, className, create_object);
 }
 
+// clang-format off
 const char PlayerMetaRef::className[] = "PlayerMetaRef";
 const luaL_Reg PlayerMetaRef::methods[] = {
 	luamethod(MetaDataRef, contains),
@@ -75,3 +76,4 @@ const luaL_Reg PlayerMetaRef::methods[] = {
 	luamethod(MetaDataRef, equals),
 	{0,0}
 };
+// clang-format on

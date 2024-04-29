@@ -24,7 +24,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "networkprotocol.h"
 
 class NetworkPacket;
-// Note: don't forward-declare Server here (#14324)
 
 enum ToServerConnectionState {
 	TOSERVER_STATE_NOT_CONNECTED,
@@ -34,7 +33,7 @@ enum ToServerConnectionState {
 };
 struct ToServerCommandHandler
 {
-	const char *name;
+	const std::string name;
 	ToServerConnectionState state;
 	void (Server::*handler)(NetworkPacket* pkt);
 };

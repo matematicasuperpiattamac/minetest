@@ -87,6 +87,7 @@ private:
 	// TODO: Add callback to update these when g_settings changes
 	bool m_cache_enable_shaders;
 	bool m_cache_smooth_lighting;
+	int m_meshgen_block_cache_size;
 
 	void fillDataFromMapBlocks(QueuedMeshUpdate *q);
 	void cleanupCache();
@@ -109,13 +110,12 @@ class MeshUpdateManager;
 class MeshUpdateWorkerThread : public UpdateThread
 {
 public:
-	MeshUpdateWorkerThread(Client *client, MeshUpdateQueue *queue_in, MeshUpdateManager *manager, v3s16 *camera_offset);
+	MeshUpdateWorkerThread(MeshUpdateQueue *queue_in, MeshUpdateManager *manager, v3s16 *camera_offset);
 
 protected:
 	virtual void doUpdate();
 
 private:
-	Client *m_client;
 	MeshUpdateQueue *m_queue_in;
 	MeshUpdateManager *m_manager;
 	v3s16 *m_camera_offset;

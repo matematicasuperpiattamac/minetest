@@ -90,7 +90,6 @@ public:
 	void step(float dtime, bool send_recommended) override;
 	void setBasePosition(v3f position);
 	void setPos(const v3f &pos) override;
-	void addPos(const v3f &added_pos) override;
 	void moveTo(v3f pos, bool continuous) override;
 	void setPlayerYaw(const float yaw);
 	// Data should not be sent at player initialization
@@ -142,9 +141,8 @@ public:
 
 	void disconnected();
 
-	void setPlayer(RemotePlayer *player) { m_player = player; }
 	RemotePlayer *getPlayer() { return m_player; }
-	session_t getPeerID() const;
+	session_t getPeerID() const { return m_peer_id; }
 
 	// Cheat prevention
 
@@ -194,7 +192,7 @@ private:
 	std::string generateUpdatePhysicsOverrideCommand() const;
 
 	RemotePlayer *m_player = nullptr;
-	session_t m_peer_id_initial = 0; ///< only used to initialize RemotePlayer
+	session_t m_peer_id = 0;
 
 	// Cheat prevention
 	LagPool m_dig_pool;

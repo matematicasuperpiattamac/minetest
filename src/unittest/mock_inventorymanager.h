@@ -17,15 +17,11 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#pragma once
+#include <gamedef.h>
+#include <inventory.h>
+#include <inventorymanager.h>
 
-#include "gamedef.h"
-#include "inventory.h"
-#include "server/serverinventorymgr.h"
-
-class ServerEnvironment;
-
-class MockInventoryManager : public ServerInventoryManager
+class MockInventoryManager : public InventoryManager
 {
 public:
 	MockInventoryManager(IGameDef *gamedef) :
@@ -33,17 +29,14 @@ public:
 		p2(gamedef->getItemDefManager())
 	{};
 
-	Inventory *getInventory(const InventoryLocation &loc) override
-	{
+	virtual Inventory* getInventory(const InventoryLocation &loc){
 		if (loc.type == InventoryLocation::PLAYER && loc.name == "p1")
 			return &p1;
 		if (loc.type == InventoryLocation::PLAYER && loc.name == "p2")
 			return &p2;
 		return nullptr;
 	}
-	void setInventoryModified(const InventoryLocation &loc) override {}
 
 	Inventory p1;
 	Inventory p2;
-
 };

@@ -70,8 +70,6 @@ local flag_checkboxes = {
 		{ "trees", fgettext("Trees and jungle grass") },
 		{ "flat", fgettext("Flat terrain") },
 		{ "mudflow", fgettext("Mud flow"), fgettext("Terrain surface erosion") },
-		{ "temples", fgettext("Desert temples"),
-		fgettext("Different dungeon variant generated in desert biomes (only if dungeons enabled)") },
 		-- Biome settings are in mgv6_biomes below
 	},
 }
@@ -93,15 +91,27 @@ local mgv6_biomes = {
 
 local function create_world_formspec(dialogdata)
 
+	-- Point the player to ContentDB when no games are found
+	if #pkgmgr.games == 0 then
+		return "size[8,2.5,true]" ..
+			"style[label_button;border=false]" ..
+			"button[0.5,0.5;7,0.5;label_button;" ..
+			fgettext("You have no games installed.") .. "]" ..
+			"button[0.5,1.5;2.5,0.5;world_create_open_cdb;" .. fgettext("Install a game") .. "]" ..
+			"button[5.0,1.5;2.5,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
+	end
+
 	local current_mg = dialogdata.mg
 	local mapgens = core.get_mapgen_names()
 
+	local gameid = core.settings:get("menu_last_game")
+
 	local flags = dialogdata.flags
 
-	local game = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
+	local game = pkgmgr.find_by_gameid(gameid)
 	if game == nil then
 		-- should never happen but just pick the first game
-		game = pkgmgr.games[1]
+		game = pkgmgr.get_game(1)
 		core.settings:set("menu_last_game", game.id)
 	end
 
@@ -281,7 +291,7 @@ local function create_world_formspec(dialogdata)
 	end
 
 	local retval =
-		"size[12.25,7.4,true]" ..
+		"size[12.25,7,true]" ..
 
 		-- Left side
 		"container[0,0]"..
@@ -302,8 +312,8 @@ local function create_world_formspec(dialogdata)
 		"label[0,2;" .. fgettext("Mapgen") .. "]"..
 		"dropdown[0,2.5;6.3;dd_mapgen;" .. mglist .. ";" .. selindex .. "]"
 
-	-- Warning when making a devtest world
-	if game.id == "devtest" then
+	-- Warning if only devtest is installed
+	if #pkgmgr.games == 1 and pkgmgr.games[1].id == "devtest" then
 		retval = retval ..
 			"container[0,3.5]" ..
 			"box[0,0;5.8,1.7;#ff8800]" ..
@@ -323,10 +333,8 @@ local function create_world_formspec(dialogdata)
 		"container_end[]"..
 
 		-- Menu buttons
-		"container[0,6.9]"..
-		"button[3.25,0;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
-		"button[6.25,0;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]" ..
-		"container_end[]"
+		"button[3.25,6.5;3,0.5;world_create_confirm;" .. fgettext("Create") .. "]" ..
+		"button[6.25,6.5;3,0.5;world_create_cancel;" .. fgettext("Cancel") .. "]"
 
 	return retval
 
@@ -335,7 +343,7 @@ end
 local function create_world_buttonhandler(this, fields)
 
 	if fields["world_create_open_cdb"] then
-		local dlg = create_contentdb_dlg("game")
+		local dlg = create_store_dlg("game")
 		dlg:set_parent(this.parent)
 		this:delete()
 		this.parent:hide()
@@ -346,18 +354,12 @@ local function create_world_buttonhandler(this, fields)
 	if fields["world_create_confirm"] or
 		fields["key_enter"] then
 
-		if fields["key_enter"] then
-			-- HACK: This timestamp prevents double-triggering when pressing Enter on an input box
-			-- and releasing it on a button[] or textlist[] due to instant formspec updates.
-			this.parent.dlg_create_world_closed_at = core.get_us_time()
-		end
-
 		local worldname = fields["te_world_name"]
-		local game, _ = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
+		local game, gameindex = pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))
 
 		local message
 		if game == nil then
-			message = fgettext_ne("No game selected")
+			message = fgettext("No game selected")
 		end
 
 		if message == nil then
@@ -376,7 +378,7 @@ local function create_world_buttonhandler(this, fields)
 			end
 
 			if menudata.worldlist:uid_exists_raw(worldname) then
-				message = fgettext_ne("A world named \"$1\" already exists", worldname)
+				message = fgettext("A world named \"$1\" already exists", worldname)
 			end
 		end
 
@@ -397,7 +399,7 @@ local function create_world_buttonhandler(this, fields)
 				mgvalleys_spflags = table_to_flags(this.data.flags.valleys),
 				mgflat_spflags = table_to_flags(this.data.flags.flat),
 			}
-			message = core.create_world(worldname, game.id, settings)
+			message = core.create_world(worldname, gameindex, settings)
 		end
 
 		if message == nil then

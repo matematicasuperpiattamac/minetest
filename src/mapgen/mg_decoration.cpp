@@ -27,7 +27,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/numeric.h"
 #include <algorithm>
 #include <vector>
-#include "mapgen/treegen.h"
 
 
 FlagDesc flagdesc_deco[] = {
@@ -237,7 +236,8 @@ size_t Decoration::placeDeco(Mapgen *mg, u32 blockseed, v3s16 nmin, v3s16 nmax)
 
 						v3s16 pos(x, y, z);
 						if (generate(mg->vm, &ps, pos, false))
-							mg->gennotify.addDecorationEvent(pos, index);
+							mg->gennotify.addEvent(
+									GENNOTIFY_DECORATION, pos, index);
 					}
 				}
 
@@ -249,7 +249,8 @@ size_t Decoration::placeDeco(Mapgen *mg, u32 blockseed, v3s16 nmin, v3s16 nmax)
 
 						v3s16 pos(x, y, z);
 						if (generate(mg->vm, &ps, pos, true))
-							mg->gennotify.addDecorationEvent(pos, index);
+							mg->gennotify.addEvent(
+									GENNOTIFY_DECORATION, pos, index);
 					}
 				}
 			} else { // Heightmap decorations
@@ -272,7 +273,7 @@ size_t Decoration::placeDeco(Mapgen *mg, u32 blockseed, v3s16 nmin, v3s16 nmax)
 
 				v3s16 pos(x, y, z);
 				if (generate(mg->vm, &ps, pos, false))
-					mg->gennotify.addDecorationEvent(pos, index);
+					mg->gennotify.addEvent(GENNOTIFY_DECORATION, pos, index);
 			}
 		}
 	}
@@ -472,25 +473,4 @@ size_t DecoSchematic::generate(MMVManip *vm, PcgRandom *pr, v3s16 p, bool ceilin
 	schematic->blitToVManip(vm, p, rot, force_placement);
 
 	return 1;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-ObjDef *DecoLSystem::clone() const
-{
-	auto def = new DecoLSystem();
-	Decoration::cloneTo(def);
-
-	def->tree_def = tree_def;
-	return def;
-}
-
-
-size_t DecoLSystem::generate(MMVManip *vm, PcgRandom *pr, v3s16 p, bool ceiling)
-{
-	if (!canPlaceDecoration(vm, p))
-		return 0;
-
-	// Make sure that tree_def can't be modified, since it is shared.
-	const auto &ref = *tree_def;
-	return treegen::make_ltree(*vm, p, ref);
 }

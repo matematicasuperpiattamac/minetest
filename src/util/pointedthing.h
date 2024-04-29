@@ -23,9 +23,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "irr_v3d.h"
 #include <iostream>
 #include <string>
-#include "pointabilities.h"
 
-enum PointedThingType :u8
+enum PointedThingType
 {
 	POINTEDTHING_NOTHING,
 	POINTEDTHING_NODE,
@@ -91,20 +90,15 @@ struct PointedThing
 	 * ray's start point and the intersection point in irrlicht coordinates.
 	 */
 	f32 distanceSq = 0;
-	/*!
-	 * How the object or node has been pointed at.
-	 */
-	PointabilityType pointability = PointabilityType::POINTABLE_NOT;
 
 	//! Constructor for POINTEDTHING_NOTHING
 	PointedThing() = default;
 	//! Constructor for POINTEDTHING_NODE
 	PointedThing(const v3s16 &under, const v3s16 &above,
 		const v3s16 &real_under, const v3f &point, const v3f &normal,
-		u16 box_id, f32 distSq, PointabilityType pointability);
+		u16 box_id, f32 distSq);
 	//! Constructor for POINTEDTHING_OBJECT
-	PointedThing(u16 id, const v3f &point, const v3f &normal, const v3f &raw_normal, f32 distSq,
-		PointabilityType pointability);
+	PointedThing(u16 id, const v3f &point, const v3f &normal, const v3f &raw_normal, f32 distSq);
 	std::string dump() const;
 	void serialize(std::ostream &os) const;
 	void deSerialize(std::istream &is);

@@ -39,9 +39,10 @@ std::string translate_password(const std::string &name,
 
 	std::string slt = name + password;
 	SHA1 sha1;
-	sha1.addBytes(slt);
-	std::string digest = sha1.getDigest();
-	std::string pwd = base64_encode(digest);
+	sha1.addBytes(slt.c_str(), slt.length());
+	unsigned char *digest = sha1.getDigest();
+	std::string pwd = base64_encode(digest, 20);
+	free(digest);
 	return pwd;
 }
 
@@ -111,8 +112,8 @@ std::string encode_srp_verifier(const std::string &verifier,
 {
 	std::ostringstream ret_str;
 	ret_str << "#1#"
-		<< base64_encode(salt) << "#"
-		<< base64_encode(verifier);
+		<< base64_encode((unsigned char *)salt.c_str(), salt.size()) << "#"
+		<< base64_encode((unsigned char *)verifier.c_str(), verifier.size());
 	return ret_str.str();
 }
 

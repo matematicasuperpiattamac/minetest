@@ -23,12 +23,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define CATCH_CONFIG_RUNNER
 #include "benchmark_setup.h"
 
-bool run_benchmarks(const char *arg)
+int run_benchmarks()
 {
-	const char *const argv[] = {
-		"MinetestBenchmark", arg, nullptr
-	};
-	const int argc = arg ? 2 : 1;
+	int argc = 1;
+	const char *argv[] = { "MinetestBenchmark", NULL };
 	int errCount = Catch::Session().run(argc, argv);
-	return errCount == 0;
+	return errCount ? 1 : 0;
 }

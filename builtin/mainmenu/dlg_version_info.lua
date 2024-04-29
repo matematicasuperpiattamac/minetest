@@ -36,8 +36,9 @@ local function version_info_formspec(data)
 		"formspec_version[3]",
 		"size[12.8,7]",
 		"style_type[label;textcolor=#0E0]",
-		"label[0.5,0.8;", title, "]",
-		"textarea[0.4,1.6;12,3.4;;;", message, "]",
+		"label[0.5,0.8;", core.formspec_escape(title), "]",
+		"textarea[0.4,1.6;12,3.4;;;",
+			core.formspec_escape(message), "]",
 		"container[0.4,5.8]",
 		"button[0.0,0;4.0,0.8;version_check_visit;", fgettext("Visit website"), "]",
 		"button[4.5,0;3.5,0.8;version_check_remind;", fgettext("Later"), "]",
@@ -51,13 +52,12 @@ end
 local function version_info_buttonhandler(this, fields)
 	if fields.version_check_remind then
 		-- Erase last known, user will be reminded again at next check
-		cache_settings:set("update_last_known", "")
+		core.settings:set("update_last_known", "")
 		this:delete()
 		return true
 	end
 	if fields.version_check_never then
-		-- clear checked URL
-		core.settings:set("update_information_url", "")
+		core.settings:set("update_last_checked", "disabled")
 		this:delete()
 		return true
 	end
@@ -72,15 +72,6 @@ local function version_info_buttonhandler(this, fields)
 	return false
 end
 
-local function version_info_eventhandler(event)
-	if event == "DialogShow" then
-		mm_game_theme.set_engine()
-		return true
-	end
-
-	return false
-end
-
 local function create_version_info_dlg(new_version, url)
 	assert(type(new_version) == "string")
 	assert(type(url) == "string")
@@ -88,7 +79,7 @@ local function create_version_info_dlg(new_version, url)
 	local retval = dialog_create("version_info",
 		version_info_formspec,
 		version_info_buttonhandler,
-		version_info_eventhandler)
+		nil)
 
 	retval.data.new_version = new_version
 	retval.data.url = url
@@ -117,7 +108,7 @@ local function on_version_info_received(json)
 		return
 	end
 
-	local known_update = tonumber(cache_settings:get("update_last_known")) or 0
+	local known_update = tonumber(core.settings:get("update_last_known")) or 0
 
 	-- Format: MMNNPPP (Major, Minor, Patch)
 	local new_number = type(json.latest) == "table" and json.latest.version_code
@@ -136,7 +127,7 @@ local function on_version_info_received(json)
 		return
 	end
 
-	cache_settings:set("update_last_known", tostring(new_number))
+	core.settings:set("update_last_known", tostring(new_number))
 
 	-- Show version info dialog (once)
 	maintab:hide()
@@ -150,20 +141,20 @@ end
 
 function check_new_version()
 	local url = core.settings:get("update_information_url")
-	if url == "" then
+	if core.settings:get("update_last_checked") == "disabled" or
+			url == "" then
 		-- Never show any updates
 		return
 	end
 
-	-- every 2 days
-	if check_cache_age("update_last_checked", 2 * 24 * 3600) then
+	local time_now = os.time()
+	local time_checked = tonumber(core.settings:get("update_last_checked")) or 0
+	if time_now - time_checked < 2 * 24 * 3600 then
+		-- Check interval of 2 entire days
 		return
 	end
-	cache_settings:set("update_last_checked", tostring(os.time()))
 
-	-- Clean old leftovers (this can be removed after 5.9.0 or so)
-	core.settings:remove("update_last_checked")
-	core.settings:remove("update_last_known")
+	core.settings:set("update_last_checked", tostring(time_now))
 
 	core.handle_async(function(params)
 		local http = core.get_http_api()

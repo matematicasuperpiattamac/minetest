@@ -37,7 +37,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/string.h"
 #include "util/enriched_string.h"
 #include "StyleSpec.h"
-#include <IGUIStaticText.h>
 
 class InventoryManager;
 class ISimpleTextureSource;
@@ -137,7 +136,6 @@ class GUIFormSpecMenu : public GUIModalMenu
 		std::string fname;
 		std::wstring flabel;
 		std::wstring fdefault;
-		std::string url;
 		s32 fid;
 		bool send;
 		FormspecFieldType ftype;
@@ -288,7 +286,7 @@ public:
 	core::rect<s32> getAbsoluteRect();
 
 #ifdef __ANDROID__
-	void getAndroidUIInput();
+	bool getAndroidUIInput();
 #endif
 
 protected:

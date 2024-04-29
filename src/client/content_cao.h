@@ -104,7 +104,7 @@ private:
 	float m_animation_blend = 0.0f;
 	bool m_animation_loop = true;
 	// stores position and rotation for each bone name
-	BoneOverrideMap m_bone_override;
+	std::unordered_map<std::string, core::vector2d<v3f>> m_bone_position;
 
 	int m_attachment_parent_id = 0;
 	std::unordered_set<int> m_attachment_child_ids;
@@ -130,7 +130,6 @@ private:
 	bool m_is_visible = false;
 	// Material
 	video::E_MATERIAL_TYPE m_material_type;
-	f32 m_material_type_param;
 	// Settings
 	bool m_enable_shaders = false;
 
@@ -174,8 +173,6 @@ public:
 
 	inline const ObjectProperties &getProperties() const { return m_prop; }
 
-	inline const std::string &getName() const { return m_name; }
-
 	scene::ISceneNode *getSceneNode() const override;
 
 	scene::IAnimatedMeshSceneNode *getAnimatedMeshSceneNode() const override;
@@ -208,11 +205,6 @@ public:
 	inline bool isLocalPlayer() const override
 	{
 		return m_is_local_player;
-	}
-
-	inline bool isPlayer() const
-	{
-		return m_is_player;
 	}
 
 	inline bool isVisible() const
@@ -275,7 +267,7 @@ public:
 
 	void updateAnimationSpeed();
 
-	void updateBones(f32 dtime);
+	void updateBonePosition();
 
 	void processMessage(const std::string &data) override;
 

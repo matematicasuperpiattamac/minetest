@@ -22,6 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string>
 #include <sstream>
 #include <vector>
+#include <ctgmath>
 #include <type_traits>
 #include "irrlicht_changes/printing.h"
 #include "irrlichttypes_bloated.h"
@@ -201,8 +202,7 @@ namespace ParticleParamTypes
 	}
 
 	// Animation styles (fwd is normal, linear interpolation)
-	// TweenStyle_END is a dummy value for validity check
-	enum class TweenStyle : u8 { fwd, rev, pulse, flicker, TweenStyle_END};
+	enum class TweenStyle : u8 { fwd, rev, pulse, flicker };
 
 	// "Tweened" pretty much means "animated" in this context
 	template <typename T>

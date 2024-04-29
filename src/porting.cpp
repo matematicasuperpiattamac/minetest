@@ -52,8 +52,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 	#include "porting_android.h"
 #endif
 #if defined(__APPLE__)
-	#include <mach-o/dyld.h>
-	#include <CoreFoundation/CoreFoundation.h>
 	// For _NSGetEnviron()
 	// Related: https://gitlab.haskell.org/ghc/ghc/issues/2458
 	#include <crt_externs.h>
@@ -68,10 +66,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "filesys.h"
 #include "log.h"
 #include "util/string.h"
-#include <vector>
+#include <list>
 #include <cstdarg>
 #include <cstdio>
-#include <signal.h>
 
 #if !defined(SERVER) && defined(_WIN32)
 // On Windows export some driver-specific variables to encourage Minetest to be
@@ -89,7 +86,7 @@ namespace porting
 	Signal handler (grabs Ctrl-C on POSIX systems)
 */
 
-static bool g_killed = false;
+bool g_killed = false;
 
 bool *signal_handler_killstatus()
 {
@@ -97,8 +94,9 @@ bool *signal_handler_killstatus()
 }
 
 #if !defined(_WIN32) // POSIX
+	#include <signal.h>
 
-static void signal_handler(int sig)
+void signal_handler(int sig)
 {
 	if (!g_killed) {
 		if (sig == SIGINT) {
@@ -127,8 +125,9 @@ void signal_handler_init(void)
 }
 
 #else // _WIN32
+	#include <signal.h>
 
-static BOOL WINAPI event_handler(DWORD sig)
+BOOL WINAPI event_handler(DWORD sig)
 {
 	switch (sig) {
 	case CTRL_C_EVENT:
@@ -163,11 +162,11 @@ void signal_handler_init(void)
 	Path mangler
 */
 
-// Nobody should be reading these before initializePaths() is called
-std::string path_share = "UNINITIALIZED";
-std::string path_user = "UNINITIALIZED";
-std::string path_locale = "UNINITIALIZED";
-std::string path_cache = "UNINITIALIZED";
+// Default to RUN_IN_PLACE style relative paths
+std::string path_share = "..";
+std::string path_user = "..";
+std::string path_locale = path_share + DIR_DELIM + "locale";
+std::string path_cache = path_user + DIR_DELIM + "cache";
 
 
 std::string getDataPath(const char *subpath)
@@ -175,7 +174,7 @@ std::string getDataPath(const char *subpath)
 	return path_share + DIR_DELIM + subpath;
 }
 
-[[maybe_unused]] static void pathRemoveFile(char *path, char delim)
+void pathRemoveFile(char *path, char delim)
 {
 	// Remove filename and path delimiter
 	int i;
@@ -203,6 +202,7 @@ bool detectMSVCBuildDir(const std::string &path)
 std::string get_sysinfo()
 {
 #ifdef _WIN32
+
 	std::ostringstream oss;
 	LPSTR filePath = new char[MAX_PATH];
 	UINT blockSize;
@@ -222,25 +222,15 @@ std::string get_sysinfo()
 		<< LOWORD(fixedFileInfo->dwProductVersionMS) << '.' // Minor
 		<< HIWORD(fixedFileInfo->dwProductVersionLS) << ' '; // Build
 
-	SYSTEM_INFO info;
-	GetNativeSystemInfo(&info);
-	switch (info.wProcessorArchitecture) {
-	case PROCESSOR_ARCHITECTURE_AMD64:
-		oss << "x86_64";
-		break;
-	case PROCESSOR_ARCHITECTURE_ARM:
-		oss << "arm";
-		break;
-	case PROCESSOR_ARCHITECTURE_ARM64:
-		oss << "arm64";
-		break;
-	case PROCESSOR_ARCHITECTURE_INTEL:
+	#ifdef _WIN64
+	oss << "x86_64";
+	#else
+	BOOL is64 = FALSE;
+	if (IsWow64Process(GetCurrentProcess(), &is64) && is64)
+		oss << "x86_64"; // 32-bit app on 64-bit OS
+	else
 		oss << "x86";
-		break;
-	default:
-		oss << "unknown";
-		break;
-	}
+	#endif
 
 	delete[] lpVersionInfo;
 	delete[] filePath;
@@ -266,9 +256,9 @@ bool getCurrentWorkingDir(char *buf, size_t len)
 }
 
 
-static bool getExecPathFromProcfs(char *buf, size_t buflen)
+bool getExecPathFromProcfs(char *buf, size_t buflen)
 {
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#ifndef _WIN32
 	buflen--;
 
 	ssize_t len;
@@ -395,7 +385,10 @@ bool getCurrentExecPath(char *buf, size_t len)
 #endif
 
 
-[[maybe_unused]] static inline const char *getHomeOrFail()
+//// Non-Windows
+#if !defined(_WIN32)
+
+const char *getHomeOrFail()
 {
 	const char *home = getenv("HOME");
 	// In rare cases the HOME environment variable may be unset
@@ -403,6 +396,8 @@ bool getCurrentExecPath(char *buf, size_t len)
 		"Required environment variable HOME is not set");
 	return home;
 }
+
+#endif
 
 
 //// Windows
@@ -443,13 +438,6 @@ bool setSystemPaths()
 }
 
 
-//// Android
-
-#elif defined(__ANDROID__)
-
-extern bool setSystemPaths(); // defined in porting_android.cpp
-
-
 //// Linux
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 
@@ -458,7 +446,11 @@ bool setSystemPaths()
 	char buf[BUFSIZ];
 
 	if (!getCurrentExecPath(buf, sizeof(buf))) {
+#ifdef __ANDROID__
+		errorstream << "Unable to read bindir "<< std::endl;
+#else
 		FATAL_ERROR("Unable to read bindir");
+#endif
 		return false;
 	}
 
@@ -467,7 +459,7 @@ bool setSystemPaths()
 
 	// Find share directory from these.
 	// It is identified by containing the subdirectory "builtin".
-	std::vector<std::string> trylist;
+	std::list<std::string> trylist;
 	std::string static_sharedir = STATIC_SHAREDIR;
 	if (!static_sharedir.empty() && static_sharedir != ".")
 		trylist.push_back(static_sharedir);
@@ -476,7 +468,12 @@ bool setSystemPaths()
 		DIR_DELIM + PROJECT_NAME);
 	trylist.push_back(bindir + DIR_DELIM "..");
 
-	for (auto i = trylist.begin(); i != trylist.end(); ++i) {
+#ifdef __ANDROID__
+	trylist.push_back(path_user);
+#endif
+
+	for (std::list<std::string>::const_iterator
+			i = trylist.begin(); i != trylist.end(); ++i) {
 		const std::string &trypath = *i;
 		if (!fs::PathExists(trypath) ||
 			!fs::PathExists(trypath + DIR_DELIM + "builtin")) {
@@ -495,6 +492,7 @@ bool setSystemPaths()
 		break;
 	}
 
+#ifndef __ANDROID__
 	const char *const minetest_user_path = getenv("MINETEST_USER_PATH");
 	if (minetest_user_path && minetest_user_path[0] != '\0') {
 		path_user = std::string(minetest_user_path);
@@ -502,6 +500,7 @@ bool setSystemPaths()
 		path_user = std::string(getHomeOrFail()) + DIR_DELIM "."
 			+ PROJECT_NAME;
 	}
+#endif
 
 	return true;
 }
@@ -553,8 +552,7 @@ bool setSystemPaths()
 
 #endif
 
-// Move cache folder from path_user to system cache location if possible.
-[[maybe_unused]] static void migrateCachePath()
+void migrateCachePath()
 {
 	const std::string local_cache_path = path_user + DIR_DELIM + "cache";
 
@@ -574,30 +572,13 @@ bool setSystemPaths()
 	}
 }
 
-// Create tag in cache folder according to <https://bford.info/cachedir/> spec
-static void createCacheDirTag()
-{
-	const auto path = path_cache + DIR_DELIM + "CACHEDIR.TAG";
-
-	if (fs::PathExists(path))
-		return;
-	fs::CreateAllDirs(path_cache);
-	std::ofstream ofs(path, std::ios::out | std::ios::binary);
-	if (!ofs.good())
-		return;
-	ofs << "Signature: 8a477f597d28d172789f06886806bc55\n"
-		"# This file is a cache directory tag automatically created by "
-		PROJECT_NAME_C ".\n"
-		"# For information about cache directory tags, see: "
-		"https://bford.info/cachedir/\n";
-}
-
 void initializePaths()
 {
 #if RUN_IN_PLACE
+	char buf[BUFSIZ];
+
 	infostream << "Using relative paths (RUN_IN_PLACE)" << std::endl;
 
-	char buf[BUFSIZ];
 	bool success =
 		getCurrentExecPath(buf, sizeof(buf)) ||
 		getExecPathFromProcfs(buf, sizeof(buf));
@@ -635,18 +616,17 @@ void initializePaths()
 		path_user  = execpath;
 	}
 	path_cache = path_user + DIR_DELIM + "cache";
-
 #else
 	infostream << "Using system-wide paths (NOT RUN_IN_PLACE)" << std::endl;
 
 	if (!setSystemPaths())
 		errorstream << "Failed to get one or more system-wide path" << std::endl;
 
-#  ifdef __ANDROID__
-	sanity_check(!path_cache.empty());
-#  elif defined(_WIN32)
+
+#  ifdef _WIN32
 	path_cache = path_user + DIR_DELIM + "cache";
 #  else
+	// Initialize path_cache
 	// First try $XDG_CACHE_HOME/PROJECT_NAME
 	const char *cache_dir = getenv("XDG_CACHE_HOME");
 	const char *home_dir = getenv("HOME");
@@ -660,18 +640,14 @@ void initializePaths()
 		// If neither works, use $PATH_USER/cache
 		path_cache = path_user + DIR_DELIM + "cache";
 	}
-#  endif // _WIN32
-
 	// Migrate cache folder to new location if possible
 	migrateCachePath();
-
+#  endif // _WIN32
 #endif // RUN_IN_PLACE
 
 	infostream << "Detected share path: " << path_share << std::endl;
 	infostream << "Detected user path: " << path_user << std::endl;
 	infostream << "Detected cache path: " << path_cache << std::endl;
-
-	createCacheDirTag();
 
 #if USE_GETTEXT
 	bool found_localedir = false;
@@ -740,32 +716,15 @@ bool secure_rand_fill_buf(void *buf, size_t len)
 
 #endif
 
-#ifndef __ANDROID__
-
-void osSpecificInit()
-{
-#ifdef _WIN32
-	// hardening options
-	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
-	SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE |
-		BASE_SEARCH_PATH_PERMANENT);
-	SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
-#endif
-}
-
-#endif
-
 void attachOrCreateConsole()
 {
 #ifdef _WIN32
-	static bool once = false;
-	const bool redirected = _fileno(stdout) >= 0; // If output is redirected to e.g a file
-	if (!once && !redirected) {
-		if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
-			freopen("CONOUT$", "w", stdout);
-			freopen("CONOUT$", "w", stderr);
-		}
-		once = true;
+	static bool consoleAllocated = false;
+	const bool redirected = (_fileno(stdout) == -2 || _fileno(stdout) == -1); // If output is redirected to e.g a file
+	if (!consoleAllocated && redirected && (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole())) {
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+		consoleAllocated = true;
 	}
 #endif
 }
@@ -824,11 +783,6 @@ int mt_snprintf(char *buf, const size_t buf_size, const char *fmt, ...)
 	return c;
 }
 
-#ifdef __ANDROID__
-// defined in porting_android.cpp
-extern void openURIAndroid(const char *url);
-#endif
-
 static bool open_uri(const std::string &uri)
 {
 	if (uri.find_first_of("\r\n") != std::string::npos) {
@@ -839,7 +793,7 @@ static bool open_uri(const std::string &uri)
 #if defined(_WIN32)
 	return (intptr_t)ShellExecuteA(NULL, NULL, uri.c_str(), NULL, NULL, SW_SHOWNORMAL) > 32;
 #elif defined(__ANDROID__)
-	openURIAndroid(uri.c_str());
+	openURIAndroid(uri);
 	return true;
 #elif defined(__APPLE__)
 	const char *argv[] = {"open", uri.c_str(), NULL};
@@ -853,7 +807,7 @@ static bool open_uri(const std::string &uri)
 
 bool open_url(const std::string &url)
 {
-	if (!str_starts_with(url, "http://") && !str_starts_with(url, "https://")) {
+	if (url.substr(0, 7) != "http://" && url.substr(0, 8) != "https://") {
 		errorstream << "Unable to open browser as URL is missing schema: " << url << std::endl;
 		return false;
 	}

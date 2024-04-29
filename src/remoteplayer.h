@@ -41,8 +41,8 @@ class RemotePlayer : public Player
 	friend class PlayerDatabaseFiles;
 
 public:
-	RemotePlayer(const char *name, IItemDefManager *idef);
-	virtual ~RemotePlayer();
+	RemotePlayer(const char *name, const char *token, IItemDefManager *idef);
+	virtual ~RemotePlayer() = default;
 
 	PlayerSAO *getPlayerSAO() { return m_sao; }
 	void setPlayerSAO(PlayerSAO *sao) { m_sao = sao; }
@@ -135,7 +135,6 @@ public:
 	u16 protocol_version = 0;
 	u16 formspec_version = 0;
 
-	/// returns PEER_ID_INEXISTENT when PlayerSAO is not ready
 	session_t getPeerId() const { return m_peer_id; }
 
 	void setPeerId(session_t peer_id) { m_peer_id = peer_id; }

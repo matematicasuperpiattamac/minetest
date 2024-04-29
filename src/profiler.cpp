@@ -22,37 +22,40 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 static Profiler main_profiler;
 Profiler *g_profiler = &main_profiler;
-
-ScopeProfiler::ScopeProfiler(Profiler *profiler, const std::string &name,
-		ScopeProfilerType type, TimePrecision prec) :
-	m_profiler(profiler),
-	m_name(name), m_type(type), m_precision(prec)
+ScopeProfiler::ScopeProfiler(
+		Profiler *profiler, const std::string &name, ScopeProfilerType type) :
+		m_profiler(profiler),
+		m_name(name), m_type(type)
 {
-	m_name.append(" [").append(TimePrecision_units[prec]).append("]");
-	m_time1 = porting::getTime(prec);
+	m_name.append(" [ms]");
+	if (m_profiler)
+		m_timer = new TimeTaker(m_name, nullptr, PRECISION_MILLI);
 }
 
 ScopeProfiler::~ScopeProfiler()
 {
-	if (!m_profiler)
+	if (!m_timer)
 		return;
 
-	float duration = porting::getTime(m_precision) - m_time1;
-
-	switch (m_type) {
-	case SPT_ADD:
-		m_profiler->add(m_name, duration);
-		break;
-	case SPT_AVG:
-		m_profiler->avg(m_name, duration);
-		break;
-	case SPT_GRAPH_ADD:
-		m_profiler->graphAdd(m_name, duration);
-		break;
-	case SPT_MAX:
-		m_profiler->max(m_name, duration);
-		break;
+	float duration_ms = m_timer->stop(true);
+	float duration = duration_ms;
+	if (m_profiler) {
+		switch (m_type) {
+		case SPT_ADD:
+			m_profiler->add(m_name, duration);
+			break;
+		case SPT_AVG:
+			m_profiler->avg(m_name, duration);
+			break;
+		case SPT_GRAPH_ADD:
+			m_profiler->graphAdd(m_name, duration);
+			break;
+		case SPT_MAX:
+			m_profiler->max(m_name, duration);
+			break;
+		}
 	}
+	delete m_timer;
 }
 
 Profiler::Profiler()
@@ -63,68 +66,92 @@ Profiler::Profiler()
 void Profiler::add(const std::string &name, float value)
 {
 	MutexAutoLock lock(m_mutex);
-
-	auto it = m_data.find(name);
-	if (it == m_data.end()) {
-		// mark with special value for checking
-		m_data.emplace(name, DataPair{value, -SPT_ADD});
-	} else {
-		assert(it->second.avgcount == -SPT_ADD);
-		it->second.value += value;
+	{
+		/* No average shall have been used; mark add/max used as -2 */
+		std::map<std::string, int>::iterator n = m_avgcounts.find(name);
+		if (n == m_avgcounts.end()) {
+			m_avgcounts[name] = -2;
+		} else {
+			if (n->second == -1)
+				n->second = -2;
+			assert(n->second == -2);
+		}
+	}
+	{
+		std::map<std::string, float>::iterator n = m_data.find(name);
+		if (n == m_data.end())
+			m_data[name] = value;
+		else
+			n->second += value;
 	}
 }
 
 void Profiler::max(const std::string &name, float value)
 {
 	MutexAutoLock lock(m_mutex);
-
-	auto it = m_data.find(name);
-	if (it == m_data.end()) {
-		// mark with special value for checking
-		m_data.emplace(name, DataPair{value, -SPT_MAX});
-	} else {
-		assert(it->second.avgcount == -SPT_MAX);
-		it->second.value = std::max(value, it->second.value);
+	{
+		/* No average shall have been used; mark add/max used as -2 */
+		auto n = m_avgcounts.find(name);
+		if (n == m_avgcounts.end()) {
+			m_avgcounts[name] = -2;
+		} else {
+			if (n->second == -1)
+				n->second = -2;
+			assert(n->second == -2);
+		}
+	}
+	{
+		auto n = m_data.find(name);
+		if (n == m_data.end())
+			m_data[name] = value;
+		else if (value > n->second)
+			n->second = value;
 	}
 }
 
 void Profiler::avg(const std::string &name, float value)
 {
 	MutexAutoLock lock(m_mutex);
+	int &count = m_avgcounts[name];
 
-	auto it = m_data.find(name);
-	if (it == m_data.end()) {
-		m_data.emplace(name, DataPair{value, 1});
-	} else {
-		assert(it->second.avgcount >= 0);
-		it->second.value += value;
-		it->second.avgcount++;
-	}
+	assert(count != -2);
+	count = MYMAX(count, 0) + 1;
+	m_data[name] += value;
 }
 
 void Profiler::clear()
 {
 	MutexAutoLock lock(m_mutex);
-	for (auto &it : m_data)
-		it.second.reset();
+	for (auto &it : m_data) {
+		it.second = 0;
+	}
+	m_avgcounts.clear();
 	m_start_time = porting::getTimeMs();
 }
 
 float Profiler::getValue(const std::string &name) const
 {
-	auto it = m_data.find(name);
-	if (it == m_data.end())
-		return 0;
-	return it->second.getValue();
+	auto numerator = m_data.find(name);
+	if (numerator == m_data.end())
+		return 0.f;
+
+	auto denominator = m_avgcounts.find(name);
+	if (denominator != m_avgcounts.end()) {
+		if (denominator->second >= 1)
+			return numerator->second / denominator->second;
+	}
+
+	return numerator->second;
 }
 
 int Profiler::getAvgCount(const std::string &name) const
 {
-	auto it = m_data.find(name);
-	if (it == m_data.end())
-		return 1;
-	int denominator = it->second.avgcount;
-	return denominator >= 1 ? denominator : 1;
+	auto n = m_avgcounts.find(name);
+
+	if (n != m_avgcounts.end() && n->second >= 1)
+		return n->second;
+
+	return 1;
 }
 
 u64 Profiler::getElapsedMs() const
@@ -177,6 +204,6 @@ void Profiler::getPage(GraphValues &o, u32 page, u32 pagecount)
 			continue;
 		}
 
-		o[i.first] = i.second.getValue();
+		o[i.first] = i.second / getAvgCount(i.first);
 	}
 }

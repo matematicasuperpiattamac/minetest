@@ -20,13 +20,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-/********************************************/
-/* may only be included from in src/network */
-/********************************************/
-
 #include <cassert>
 #include "threading/thread.h"
-#include "connection_internal.h"
+#include "connection.h"
 
 namespace con
 {
@@ -73,8 +69,7 @@ public:
 	void setPeerTimeout(float peer_timeout) { m_timeout = peer_timeout; }
 
 private:
-	void runTimeouts(float dtime, u32 peer_packet_quota);
-	void resendReliable(Channel &channel, const BufferedPacket *k, float resend_timeout);
+	void runTimeouts(float dtime);
 	void rawSend(const BufferedPacket *p);
 	bool rawSendAsPacket(session_t peer_id, u8 channelnum,
 			const SharedBuffer<u8> &data, bool reliable);
@@ -90,7 +85,7 @@ private:
 	void sendToAll(u8 channelnum, const SharedBuffer<u8> &data);
 	void sendToAllReliable(ConnectionCommandPtr &c);
 
-	void sendPackets(float dtime, u32 peer_packet_quota);
+	void sendPackets(float dtime);
 
 	void sendAsPacket(session_t peer_id, u8 channelnum, const SharedBuffer<u8> &data,
 			bool ack = false);
@@ -106,6 +101,7 @@ private:
 	Semaphore m_send_sleep_semaphore;
 
 	unsigned int m_iteration_packets_avaialble;
+	unsigned int m_max_commands_per_iteration = 1;
 	unsigned int m_max_data_packets_per_iteration;
 	unsigned int m_max_packets_requeued = 256;
 };
@@ -113,7 +109,7 @@ private:
 class ConnectionReceiveThread : public Thread
 {
 public:
-	ConnectionReceiveThread();
+	ConnectionReceiveThread(unsigned int max_packet_size);
 
 	void *run();
 
@@ -166,25 +162,8 @@ private:
 				bool reliable);
 	};
 
-	struct RateLimitHelper {
-		u64 time = 0;
-		int counter = 0;
-		bool logged = false;
-
-		void tick() {
-			u64 now = porting::getTimeS();
-			if (time != now) {
-				time = now;
-				counter = 0;
-				logged = false;
-			}
-		}
-	};
-
 	static const PacketTypeHandler packetTypeRouter[PACKET_TYPE_MAX];
 
 	Connection *m_connection = nullptr;
-
-	RateLimitHelper m_new_peer_ratelimit;
 };
 }

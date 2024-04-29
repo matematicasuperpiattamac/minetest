@@ -25,7 +25,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "filesys.h"
 #include "server/player_sao.h"
 #include "util/string.h"
-#include <json/json.h>
 #include <cassert>
 
 // !!! WARNING !!!
@@ -156,7 +155,7 @@ void PlayerDatabaseFiles::savePlayer(RemotePlayer *player)
 	std::string savedir = m_savedir + DIR_DELIM;
 	std::string path = savedir + player->getName();
 	bool path_found = false;
-	RemotePlayer testplayer("", NULL);
+	RemotePlayer testplayer("", "", NULL);
 
 	for (u32 i = 0; i < PLAYER_FILE_ALTERNATE_TRIES && !path_found; i++) {
 		if (!fs::PathExists(path)) {
@@ -202,7 +201,7 @@ bool PlayerDatabaseFiles::removePlayer(const std::string &name)
 	std::string players_path = m_savedir + DIR_DELIM;
 	std::string path = players_path + name;
 
-	RemotePlayer temp_player("", NULL);
+	RemotePlayer temp_player("", "", NULL);
 	for (u32 i = 0; i < PLAYER_FILE_ALTERNATE_TRIES; i++) {
 		// Open file and deserialize
 		std::ifstream is(path.c_str(), std::ios_base::binary);
@@ -264,7 +263,7 @@ void PlayerDatabaseFiles::listPlayers(std::vector<std::string> &res)
 		if (!is.good())
 			continue;
 
-		RemotePlayer player(filename.c_str(), NULL);
+		RemotePlayer player(filename.c_str(), "", NULL);
 		// Null env & dummy peer_id
 		PlayerSAO playerSAO(NULL, &player, 15789, false);
 
@@ -429,14 +428,13 @@ bool ModStorageDatabaseFiles::hasModEntry(const std::string &modname, const std:
 }
 
 bool ModStorageDatabaseFiles::setModEntry(const std::string &modname,
-	const std::string &key, std::string_view value)
+	const std::string &key, const std::string &value)
 {
 	Json::Value *meta = getOrCreateJson(modname);
 	if (!meta)
 		return false;
 
-	Json::Value value_v(value.data(), value.data() + value.size());
-	(*meta)[key] = std::move(value_v);
+	(*meta)[key] = Json::Value(value);
 	m_modified.insert(modname);
 
 	return true;

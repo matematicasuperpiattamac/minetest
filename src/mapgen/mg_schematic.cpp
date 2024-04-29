@@ -384,7 +384,7 @@ bool Schematic::serializeToMts(std::ostream *os) const
 	}
 
 	// compressed bulk node data
-	auto buf = MapNode::serializeBulk(MTSCHEM_MAPNODE_SER_FMT_VER,
+	SharedBuffer<u8> buf = MapNode::serializeBulk(MTSCHEM_MAPNODE_SER_FMT_VER,
 		schemdata, size.X * size.Y * size.Z, 2, 2);
 	compress(buf, ss, MTSCHEM_MAPNODE_SER_FMT_VER);
 
@@ -625,7 +625,7 @@ void Schematic::condenseContentIds()
 			numids++;
 
 			m_nodenames.push_back(m_ndef->get(c).name);
-			nodeidmap.emplace(c, id);
+			nodeidmap.emplace(std::make_pair(c, id));
 		} else {
 			id = it->second;
 		}

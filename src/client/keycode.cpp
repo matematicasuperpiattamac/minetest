@@ -18,12 +18,20 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "keycode.h"
+#include "exceptions.h"
 #include "settings.h"
 #include "log.h"
 #include "debug.h"
 #include "util/hex.h"
 #include "util/string.h"
 #include "util/basic_macros.h"
+
+class UnknownKeycode : public BaseException
+{
+public:
+	UnknownKeycode(const char *s) :
+		BaseException(s) {};
+};
 
 struct table_key {
 	const char *Name;
@@ -239,7 +247,7 @@ static const struct table_key table[] = {
 #undef N_
 
 
-static const table_key &lookup_keyname(const char *name)
+struct table_key lookup_keyname(const char *name)
 {
 	for (const auto &table_key : table) {
 		if (strcmp(table_key.Name, name) == 0)
@@ -249,7 +257,7 @@ static const table_key &lookup_keyname(const char *name)
 	throw UnknownKeycode(name);
 }
 
-static const table_key &lookup_keykey(irr::EKEY_CODE key)
+struct table_key lookup_keykey(irr::EKEY_CODE key)
 {
 	for (const auto &table_key : table) {
 		if (table_key.Key == key)
@@ -261,7 +269,7 @@ static const table_key &lookup_keykey(irr::EKEY_CODE key)
 	throw UnknownKeycode(os.str().c_str());
 }
 
-static const table_key &lookup_keychar(wchar_t Char)
+struct table_key lookup_keychar(wchar_t Char)
 {
 	for (const auto &table_key : table) {
 		if (table_key.Char == Char)
@@ -287,7 +295,7 @@ KeyPress::KeyPress(const char *name)
 		int chars_read = mbtowc(&Char, name, 1);
 		FATAL_ERROR_IF(chars_read != 1, "Unexpected multibyte character");
 		try {
-			auto &k = lookup_keychar(Char);
+			struct table_key k = lookup_keychar(Char);
 			m_name = k.Name;
 			Key = k.Key;
 			return;
@@ -296,7 +304,7 @@ KeyPress::KeyPress(const char *name)
 		// Lookup by name
 		m_name = name;
 		try {
-			auto &k = lookup_keyname(name);
+			struct table_key k = lookup_keyname(name);
 			Key = k.Key;
 			Char = k.Char;
 			return;
@@ -350,26 +358,23 @@ const char *KeyPress::name() const
 const KeyPress EscapeKey("KEY_ESCAPE");
 const KeyPress CancelKey("KEY_CANCEL");
 
-const KeyPress LMBKey("KEY_LBUTTON");
-const KeyPress MMBKey("KEY_MBUTTON");
-const KeyPress RMBKey("KEY_RBUTTON");
-
 /*
 	Key config
 */
 
 // A simple cache for quicker lookup
-static std::unordered_map<std::string, KeyPress> g_key_setting_cache;
+std::unordered_map<std::string, KeyPress> g_key_setting_cache;
 
-const KeyPress &getKeySetting(const char *settingname)
+KeyPress getKeySetting(const char *settingname)
 {
-	auto n = g_key_setting_cache.find(settingname);
+	std::unordered_map<std::string, KeyPress>::iterator n;
+	n = g_key_setting_cache.find(settingname);
 	if (n != g_key_setting_cache.end())
 		return n->second;
 
-	auto &ref = g_key_setting_cache[settingname];
-	ref = g_settings->get(settingname).c_str();
-	return ref;
+	KeyPress k(g_settings->get(settingname).c_str());
+	g_key_setting_cache[settingname] = k;
+	return k;
 }
 
 void clearKeyCache()

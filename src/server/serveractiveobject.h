@@ -26,7 +26,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "itemgroup.h"
 #include "util/container.h"
 
-
 /*
 
 Some planning
@@ -91,8 +90,6 @@ public:
 
 	virtual void setPos(const v3f &pos)
 		{ setBasePosition(pos); }
-	virtual void addPos(const v3f &added_pos)
-		{ setBasePosition(m_base_position + added_pos); }
 	// continuous: if true, object does not stop immediately at pos
 	virtual void moveTo(v3f pos, bool continuous)
 		{ setBasePosition(pos); }
@@ -170,16 +167,14 @@ public:
 	{}
 	virtual void setAnimationSpeed(float frame_speed)
 	{}
-	virtual void setBoneOverride(const std::string &bone, const BoneOverride &props)
+	virtual void setBonePosition(const std::string &bone, v3f position, v3f rotation)
 	{}
-	virtual BoneOverride getBoneOverride(const std::string &bone)
-	{ BoneOverride props; return props; }
-	virtual const BoneOverrideMap &getBoneOverrides() const
-	{ static BoneOverrideMap rv; return rv; }
+	virtual void getBonePosition(const std::string &bone, v3f *position, v3f *lotation)
+	{}
 	virtual const std::unordered_set<int> &getAttachmentChildIds() const
 	{ static std::unordered_set<int> rv; return rv; }
 	virtual ServerActiveObject *getParent() const { return nullptr; }
-	virtual ObjectProperties *accessObjectProperties()
+	virtual ObjectProperties* accessObjectProperties()
 	{ return NULL; }
 	virtual void notifyObjectPropertiesModified()
 	{}
@@ -229,10 +224,6 @@ public:
 
 	/*
 		Whether the object's static data has been stored to a block
-
-		Note that `!isStaticAllowed() && m_static_exists` is a valid state
-		(though it usually doesn't persist long) and you need to be careful
-		about handling it.
 	*/
 	bool m_static_exists = false;
 	/*

@@ -19,9 +19,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include <map>
 #include <memory>
+#include <vector>
 #include "debug.h"
-#include "util/container.h"
 #include "irrlichttypes.h"
 #include "util/basic_macros.h"
 
@@ -51,19 +52,24 @@ public:
 
 	void clear()
 	{
-		// on_destruct could add new objects so this has to be a loop
-		do {
-			for (auto &it : m_active_objects.iter()) {
-				if (!it.second)
-					continue;
-				m_active_objects.remove(it.first);
-			}
-		} while (!m_active_objects.empty());
+		while (!m_active_objects.empty())
+			removeObject(m_active_objects.begin()->first);
 	}
 
 	T *getActiveObject(u16 id)
 	{
-		return m_active_objects.get(id).get();
+		auto it = m_active_objects.find(id);
+		return it != m_active_objects.end() ? it->second.get() : nullptr;
+	}
+
+	std::vector<u16> getAllIds() const
+	{
+		std::vector<u16> ids;
+		ids.reserve(m_active_objects.size());
+		for (auto &it : m_active_objects) {
+			ids.push_back(it.first);
+		}
+		return ids;
 	}
 
 protected:
@@ -82,9 +88,11 @@ protected:
 
 	bool isFreeId(u16 id) const
 	{
-		return id != 0 && !m_active_objects.get(id);
+		return id != 0 && m_active_objects.find(id) == m_active_objects.end();
 	}
 
-	// Note that this is ordered to fix #10985
-	ModifySafeMap<u16, std::unique_ptr<T>> m_active_objects;
+	// ordered to fix #10985
+	// Note: ActiveObjects can access the ActiveObjectMgr. Only erase objects using
+	// removeObject()!
+	std::map<u16, std::unique_ptr<T>> m_active_objects;
 };

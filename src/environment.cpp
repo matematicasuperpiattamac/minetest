@@ -102,33 +102,24 @@ bool Environment::line_of_sight(v3f pos1, v3f pos2, v3s16 *p)
 }
 
 /*
-	Check how a node can be pointed at
+	Check if a node is pointable
 */
-inline static PointabilityType isPointableNode(const MapNode &n,
-	const NodeDefManager *nodedef, bool liquids_pointable,
-	const std::optional<Pointabilities> &pointabilities)
+inline static bool isPointableNode(const MapNode &n,
+	const NodeDefManager *nodedef , bool liquids_pointable)
 {
 	const ContentFeatures &features = nodedef->get(n);
-	if (pointabilities) {
-		std::optional<PointabilityType> match =
-				pointabilities->matchNode(features.name, features.groups);
-		if (match)
-			return match.value();
-	}
-
-	if (features.isLiquid() && liquids_pointable)
-		return PointabilityType::POINTABLE;
-	return features.pointable;
+	return features.pointable ||
+	       (liquids_pointable && features.isLiquid());
 }
 
-void Environment::continueRaycast(RaycastState *state, PointedThing *result_p)
+void Environment::continueRaycast(RaycastState *state, PointedThing *result)
 {
 	const NodeDefManager *nodedef = getMap().getNodeDefManager();
 	if (state->m_initialization_needed) {
 		// Add objects
 		if (state->m_objects_pointable) {
 			std::vector<PointedThing> found;
-			getSelectedActiveObjects(state->m_shootline, found, state->m_pointabilities);
+			getSelectedActiveObjects(state->m_shootline, found);
 			for (const PointedThing &pointed : found) {
 				state->m_found.push(pointed);
 			}
@@ -193,15 +184,10 @@ void Environment::continueRaycast(RaycastState *state, PointedThing *result_p)
 			bool is_valid_position;
 
 			n = map.getNode(np, &is_valid_position);
-			if (!is_valid_position)
+			if (!(is_valid_position && isPointableNode(n, nodedef,
+					state->m_liquids_pointable))) {
 				continue;
-
-			PointabilityType pointable = isPointableNode(n, nodedef,
-					state->m_liquids_pointable,
-					state->m_pointabilities);
-			// If it can be pointed through skip
-			if (pointable == PointabilityType::POINTABLE_NOT)
-				continue;
+			}
 
 			PointedThing result;
 
@@ -248,7 +234,6 @@ void Environment::continueRaycast(RaycastState *state, PointedThing *result_p)
 			if (!is_colliding) {
 				continue;
 			}
-			result.pointability = pointable;
 			result.type = POINTEDTHING_NODE;
 			result.node_undersurface = np;
 			result.distanceSq = min_distance_sq;
@@ -290,16 +275,12 @@ void Environment::continueRaycast(RaycastState *state, PointedThing *result_p)
 		state->m_previous_node = state->m_iterator.m_current_node_pos;
 		state->m_iterator.next();
 	}
-
-	// Return empty PointedThing if nothing left on the ray or it is blocking pointable
+	// Return empty PointedThing if nothing left on the ray
 	if (state->m_found.empty()) {
-		result_p->type = POINTEDTHING_NOTHING;
+		result->type = POINTEDTHING_NOTHING;
 	} else {
-		*result_p = state->m_found.top();
+		*result = state->m_found.top();
 		state->m_found.pop();
-		if (result_p->pointability == PointabilityType::POINTABLE_BLOCKING) {
-			result_p->type = POINTEDTHING_NOTHING;
-		}
 	}
 }
 

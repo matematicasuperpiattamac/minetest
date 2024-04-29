@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
+#include <iostream>
 #include <exception>
 #include <cassert>
 #include "gettime.h"

@@ -1,12 +1,13 @@
 uniform sampler2D baseTexture;
 
 uniform vec3 dayLight;
-uniform lowp vec4 fogColor;
+uniform vec4 skyBgColor;
 uniform float fogDistance;
 uniform float fogShadingParameter;
+uniform vec3 eyePosition;
 
 // The cameraOffset is the current center of the visible world.
-uniform highp vec3 cameraOffset;
+uniform vec3 cameraOffset;
 uniform float animationTimer;
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	// shadow texture
@@ -43,8 +44,11 @@ varying mediump vec2 varTexCoord;
 #else
 centroid varying vec2 varTexCoord;
 #endif
-varying highp vec3 eyeVec;
+varying vec3 eyeVec;
 varying float nightRatio;
+varying vec3 tsEyeVec;
+varying vec3 lightVec;
+varying vec3 tsLightVec;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 
@@ -157,7 +161,7 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	float depth_to_blur = f_shadowfar / SOFTSHADOWRADIUS / xyPerspectiveBias0;
 	if (depth > 0.0 && f_normal_length > 0.0)
 		// 5 is empirical factor that controls how fast shadow loses sharpness
-		sharpness_factor = clamp(5.0 * depth * depth_to_blur, 0.0, 1.0);
+		sharpness_factor = clamp(5 * depth * depth_to_blur, 0.0, 1.0);
 	depth = 0.0;
 
 	float world_to_texture = xyPerspectiveBias1 / perspective_factor / perspective_factor
@@ -444,7 +448,7 @@ void main(void)
 	// Note: clarity = (1 - fogginess)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
-	col = mix(fogColor, col, clarity);
+	col = mix(skyBgColor, col, clarity);
 	col = vec4(col.rgb, base.a);
 
 	gl_FragData[0] = col;

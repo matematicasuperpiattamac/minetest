@@ -57,7 +57,8 @@ local function init_data(data)
 		hide_game = data.hide_gamemods,
 		hide_modpackcontents = data.hide_modpackcontents
 	})
-	-- Sorting is already done by pgkmgr.get_mods
+	data.list:add_sort_mechanism("alphabetic", sort_mod_list)
+	data.list:set_sortmode("alphabetic")
 end
 
 
@@ -245,7 +246,7 @@ local function get_formspec(data)
 
 	return retval ..
 		"tablecolumns[color;tree;image,align=inline,width=1.5,0=" .. core.formspec_escape(defaulttexturedir .. "blank.png") ..
-			",1=" .. core.formspec_escape(defaulttexturedir .. "checkbox_16.png") ..
+			",1=" .. core.formspec_escape(defaulttexturedir .. "checkbox_16_white.png") ..
 			",2=" .. core.formspec_escape(defaulttexturedir .. "error_icon_orange.png") ..
 			",3=" .. core.formspec_escape(defaulttexturedir .. "error_icon_red.png") .. ";text]" ..
 		"table[5.5,0.75;5.75,6;world_config_modlist;" ..
@@ -334,7 +335,7 @@ local function handle_buttons(this, fields)
 	if fields.btn_config_world_cdb then
 		this.data.list = nil
 
-		local dlg = create_contentdb_dlg("mod")
+		local dlg = create_store_dlg("mod")
 		dlg:set_parent(this)
 		this:hide()
 		dlg:show()

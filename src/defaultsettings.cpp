@@ -26,74 +26,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mapgen/mapgen.h" // Mapgen::setDefaultSettings
 #include "util/string.h"
 
-
-/*
- * inspired by https://github.com/systemd/systemd/blob/7aed43437175623e0f3ae8b071bbc500c13ce893/src/hostname/hostnamed.c#L406
- * this could be done in future with D-Bus using query:
- * busctl get-property org.freedesktop.hostname1 /org/freedesktop/hostname1 org.freedesktop.hostname1 Chassis
- */
-static bool detect_touch()
-{
-#if defined(__ANDROID__)
-	return true;
-#elif defined(__linux__)
-	std::string chassis_type;
-
-	// device-tree platforms (non-X86)
-	std::ifstream dtb_file("/proc/device-tree/chassis-type");
-	if (dtb_file.is_open()) {
-		std::getline(dtb_file, chassis_type);
-		chassis_type.pop_back();
-
-		if (chassis_type == "tablet" ||
-		    chassis_type == "handset" ||
-		    chassis_type == "watch")
-			return true;
-
-		if (!chassis_type.empty())
-			return false;
-	}
-	// SMBIOS
-	std::ifstream dmi_file("/sys/class/dmi/id/chassis_type");
-	if (dmi_file.is_open()) {
-		std::getline(dmi_file, chassis_type);
-
-		if (chassis_type == "11" /* Handheld */ ||
-		    chassis_type == "30" /* Tablet */)
-			return true;
-
-		return false;
-	}
-
-	// ACPI-based platforms
-	std::ifstream acpi_file("/sys/firmware/acpi/pm_profile");
-	if (acpi_file.is_open()) {
-		std::getline(acpi_file, chassis_type);
-
-		if (chassis_type == "8" /* Tablet */)
-			return true;
-
-		return false;
-	}
-
-	return false;
-#elif defined(_WIN32)
-	// 0x01 The device has an integrated touch digitizer
-	// 0x80 The device is ready to receive digitizer input.
-	if ((GetSystemMetrics(SM_DIGITIZER) & 0x81) == 0x81)
-		return true;
-
-	return false;
-#else
-	// we don't know, return default
-	return false;
-#endif
-}
-
 void set_default_settings()
 {
 	Settings *settings = Settings::createLayer(SL_DEFAULTS);
-	bool has_touch = detect_touch();
 
 	// Client and server
 	settings->setDefault("language", "");
@@ -104,14 +39,13 @@ void set_default_settings()
 	// Client
 	settings->setDefault("address", "");
 	settings->setDefault("enable_sound", "true");
-	settings->setDefault("enable_touch", bool_to_cstr(has_touch));
 	settings->setDefault("sound_volume", "0.8");
-	settings->setDefault("sound_volume_unfocused", "0.3");
 	settings->setDefault("mute_sound", "false");
-	settings->setDefault("sound_extensions_blacklist", "");
 	settings->setDefault("enable_mesh_cache", "false");
 	settings->setDefault("mesh_generation_interval", "0");
 	settings->setDefault("mesh_generation_threads", "0");
+	settings->setDefault("meshgen_block_cache_size", "20");
+	settings->setDefault("enable_vbo", "true");
 	settings->setDefault("free_move", "false");
 	settings->setDefault("pitch_move", "false");
 	settings->setDefault("fast_move", "false");
@@ -155,10 +89,12 @@ void set_default_settings()
 	settings->setDefault("keymap_cmd_local", ".");
 	settings->setDefault("keymap_minimap", "KEY_KEY_V");
 	settings->setDefault("keymap_console", "KEY_F10");
-
+#if HAVE_TOUCHSCREENGUI
 	// See https://github.com/minetest/minetest/issues/12792
-	settings->setDefault("keymap_rangeselect", has_touch ? "KEY_KEY_R" : "");
-
+	settings->setDefault("keymap_rangeselect", "KEY_KEY_R");
+#else
+	settings->setDefault("keymap_rangeselect", "");
+#endif
 	settings->setDefault("keymap_freemove", "KEY_KEY_K");
 	settings->setDefault("keymap_pitchmove", "");
 	settings->setDefault("keymap_fastmove", "KEY_KEY_J");
@@ -173,7 +109,7 @@ void set_default_settings()
 	settings->setDefault("keymap_toggle_hud", "KEY_F1");
 	settings->setDefault("keymap_toggle_chat", "KEY_F2");
 	settings->setDefault("keymap_toggle_fog", "KEY_F3");
-#ifndef NDEBUG
+#if DEBUG
 	settings->setDefault("keymap_toggle_update_camera", "KEY_F4");
 #else
 	settings->setDefault("keymap_toggle_update_camera", "");
@@ -233,10 +169,8 @@ void set_default_settings()
 	// Visuals
 #ifdef NDEBUG
 	settings->setDefault("show_debug", "false");
-	settings->setDefault("opengl_debug", "false");
 #else
 	settings->setDefault("show_debug", "true");
-	settings->setDefault("opengl_debug", "true");
 #endif
 	settings->setDefault("fsaa", "2");
 	settings->setDefault("undersampling", "1");
@@ -257,7 +191,7 @@ void set_default_settings()
 	settings->setDefault("screen_h", "600");
 	settings->setDefault("window_maximized", "false");
 	settings->setDefault("autosave_screensize", "true");
-	settings->setDefault("fullscreen", bool_to_cstr(has_touch));
+	settings->setDefault("fullscreen", "false");
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
 	settings->setDefault("leaves_style", "fancy");
@@ -314,7 +248,6 @@ void set_default_settings()
 	settings->setDefault("minimap_double_scan_height", "true");
 
 	// Effects
-	settings->setDefault("enable_post_processing", "true");
 	settings->setDefault("directional_colored_fog", "true");
 	settings->setDefault("inventory_items_animations", "false");
 	settings->setDefault("mip_map", "false");
@@ -330,14 +263,12 @@ void set_default_settings()
 	settings->setDefault("enable_waving_plants", "false");
 	settings->setDefault("exposure_compensation", "0.0");
 	settings->setDefault("enable_auto_exposure", "false");
-	settings->setDefault("debanding", "true");
 	settings->setDefault("antialiasing", "none");
 	settings->setDefault("enable_bloom", "false");
 	settings->setDefault("enable_bloom_debug", "false");
 	settings->setDefault("bloom_strength_factor", "1.0");
 	settings->setDefault("bloom_intensity", "0.05");
 	settings->setDefault("bloom_radius", "1");
-	settings->setDefault("enable_volumetric_lighting", "false");
 
 	// Effects Shadows
 	settings->setDefault("enable_dynamic_shadows", "false");
@@ -358,13 +289,16 @@ void set_default_settings()
 	settings->setDefault("invert_hotbar_mouse_wheel", "false");
 	settings->setDefault("mouse_sensitivity", "0.2");
 	settings->setDefault("repeat_place_time", "0.25");
-	settings->setDefault("repeat_dig_time", "0.15");
 	settings->setDefault("safe_dig_and_place", "false");
 	settings->setDefault("random_input", "false");
 	settings->setDefault("aux1_descends", "false");
 	settings->setDefault("doubletap_jump", "false");
 	settings->setDefault("always_fly_fast", "true");
-	settings->setDefault("autojump", bool_to_cstr(has_touch));
+#ifdef HAVE_TOUCHSCREENGUI
+	settings->setDefault("autojump", "true");
+#else
+	settings->setDefault("autojump", "false");
+#endif
 	settings->setDefault("continuous_forward", "false");
 	settings->setDefault("enable_joysticks", "false");
 	settings->setDefault("joystick_id", "0");
@@ -409,10 +343,11 @@ void set_default_settings()
 	settings->setDefault("contentdb_flag_blacklist", "nonfree, desktop_default");
 #endif
 
-#if ENABLE_UPDATE_CHECKER
 	settings->setDefault("update_information_url", "https://www.minetest.net/release_info.json");
+#if ENABLE_UPDATE_CHECKER
+	settings->setDefault("update_last_checked", "");
 #else
-	settings->setDefault("update_information_url", "");
+	settings->setDefault("update_last_checked", "disabled");
 #endif
 
 	// Server
@@ -428,7 +363,6 @@ void set_default_settings()
 	settings->setDefault("max_packets_per_iteration", "1024");
 	settings->setDefault("port", "30000");
 	settings->setDefault("strict_protocol_version_checking", "false");
-	settings->setDefault("protocol_version_min", "1");
 	settings->setDefault("player_transfer_distance", "0");
 	settings->setDefault("max_simultaneous_block_sends_per_client", "40");
 	settings->setDefault("time_send_interval", "5");
@@ -458,7 +392,6 @@ void set_default_settings()
 	// This causes frametime jitter on client side, or does it?
 	settings->setDefault("max_block_send_distance", "12");
 	settings->setDefault("block_send_optimize_distance", "4");
-	settings->setDefault("block_cull_optimize_distance", "25");
 	settings->setDefault("server_side_occlusion_culling", "true");
 	settings->setDefault("csm_restriction_flags", "62");
 	settings->setDefault("csm_restriction_noderange", "0");
@@ -538,18 +471,21 @@ void set_default_settings()
 	settings->setDefault("keymap_sneak", "KEY_SHIFT");
 #endif
 
-	settings->setDefault("touchscreen_sensitivity", "0.2");
+#ifdef HAVE_TOUCHSCREENGUI
 	settings->setDefault("touchscreen_threshold", "20");
-	settings->setDefault("touch_long_tap_delay", "400");
+	settings->setDefault("touchscreen_sensitivity", "0.2");
 	settings->setDefault("touch_use_crosshair", "false");
 	settings->setDefault("fixed_virtual_joystick", "false");
 	settings->setDefault("virtual_joystick_triggers_aux1", "false");
-	settings->setDefault("touch_punch_gesture", "short_tap");
+	settings->setDefault("clickable_chat_weblinks", "false");
+#else
 	settings->setDefault("clickable_chat_weblinks", "true");
+#endif
 	// Altered settings for Android
 #ifdef __ANDROID__
 	settings->setDefault("screen_w", "0");
 	settings->setDefault("screen_h", "0");
+	settings->setDefault("fullscreen", "true");
 	settings->setDefault("performance_tradeoffs", "true");
 	settings->setDefault("max_simultaneous_block_sends_per_client", "10");
 	settings->setDefault("emergequeue_limit_diskonly", "16");
@@ -561,8 +497,6 @@ void set_default_settings()
 	settings->setDefault("active_block_range", "2");
 	settings->setDefault("viewing_range", "50");
 	settings->setDefault("leaves_style", "simple");
-	settings->setDefault("enable_post_processing", "false");
-	settings->setDefault("debanding", "false");
 	settings->setDefault("curl_verify_cert", "false");
 
 	// Apply settings according to screen size

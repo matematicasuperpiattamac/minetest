@@ -73,9 +73,6 @@ private:
 	// set_pos(self, pos)
 	static int l_set_pos(lua_State *L);
 
-	// add_pos(self, pos)
-	static int l_add_pos(lua_State *L);
-
 	// move_to(self, pos, continuous)
 	static int l_move_to(lua_State *L);
 
@@ -132,15 +129,6 @@ private:
 
 	// get_bone_position(self, bone)
 	static int l_get_bone_position(lua_State *L);
-
-	// set_bone_override(self, bone)
-	static int l_set_bone_override(lua_State *L);
-
-	// get_bone_override(self, bone)
-	static int l_get_bone_override(lua_State *L);
-
-	// get_bone_override(self)
-	static int l_get_bone_overrides(lua_State *L);
 
 	// set_attach(self, parent, bone, position, rotation)
 	static int l_set_attach(lua_State *L);
@@ -212,6 +200,9 @@ private:
 
 	// get_player_name(self)
 	static int l_get_player_name(lua_State *L);
+
+	// get_player_token(self)
+	static int l_get_player_token(lua_State *L);
 
 	// get_fov(self)
 	static int l_get_fov(lua_State *L);
@@ -299,9 +290,6 @@ private:
 
 	// hud_get(self, id)
 	static int l_hud_get(lua_State *L);
-
-	// hud_get_all(self)
-	static int l_hud_get_all(lua_State *L);
 
 	// hud_set_flags(self, flags)
 	static int l_hud_set_flags(lua_State *L);

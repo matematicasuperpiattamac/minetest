@@ -1,12 +1,13 @@
 uniform sampler2D baseTexture;
 
 uniform vec3 dayLight;
-uniform lowp vec4 fogColor;
+uniform vec4 skyBgColor;
 uniform float fogDistance;
 uniform float fogShadingParameter;
+uniform vec3 eyePosition;
 
 // The cameraOffset is the current center of the visible world.
-uniform highp vec3 cameraOffset;
+uniform vec3 cameraOffset;
 uniform float animationTimer;
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	// shadow texture
@@ -43,7 +44,7 @@ varying mediump vec2 varTexCoord;
 #else
 centroid varying vec2 varTexCoord;
 #endif
-varying highp vec3 eyeVec;
+varying vec3 eyeVec;
 varying float nightRatio;
 
 varying float vIDiff;
@@ -448,7 +449,7 @@ void main(void)
 	// Note: clarity = (1 - fogginess)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
-	col = mix(fogColor, col, clarity);
+	col = mix(skyBgColor, col, clarity);
 	col = vec4(col.rgb, base.a);
 
 	gl_FragData[0] = col;

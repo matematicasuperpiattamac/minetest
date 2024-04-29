@@ -29,7 +29,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/string.h"
 
 #ifndef SERVER
-#include "client/texturepaths.h"
+#include "client/tile.h" // getImagePath
 #endif
 
 // The maximum number of identical world names allowed
@@ -77,21 +77,8 @@ struct GameFindPath
 
 std::string getSubgamePathEnv()
 {
-	static bool has_warned = false;
 	char *subgame_path = getenv("MINETEST_SUBGAME_PATH");
-	if (subgame_path && !has_warned) {
-		warningstream << "MINETEST_SUBGAME_PATH is deprecated, use MINETEST_GAME_PATH instead."
-				<< std::endl;
-		has_warned = true;
-	}
-
-	char *game_path = getenv("MINETEST_GAME_PATH");
-
-	if (game_path)
-		return std::string(game_path);
-	else if (subgame_path)
-		return std::string(subgame_path);
-	return "";
+	return subgame_path ? std::string(subgame_path) : "";
 }
 
 SubgameSpec findSubgame(const std::string &id)
@@ -239,9 +226,9 @@ std::set<std::string> getAvailableGameIds()
 
 			// Add it to result
 			const char *ends[] = {"_game", NULL};
-			auto shorter = removeStringEnd(dln.name, ends);
+			std::string shorter = removeStringEnd(dln.name, ends);
 			if (!shorter.empty())
-				gameids.emplace(shorter);
+				gameids.insert(shorter);
 			else
 				gameids.insert(dln.name);
 		}

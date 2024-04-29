@@ -26,8 +26,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "guiFormSpecMenu.h"
 #include "client/clouds.h"
 #include "client/sound.h"
+#include "client/tile.h"
 #include "util/enriched_string.h"
-#include "translation.h"
 
 /******************************************************************************/
 /* Structs and macros                                                         */
@@ -53,7 +53,6 @@ struct image_definition {
 class GUIEngine;
 class RenderingEngine;
 class MainMenuScripting;
-class IWritableShaderSource;
 struct MainMenuData;
 
 /******************************************************************************/
@@ -166,22 +165,7 @@ public:
 		return m_scriptdir;
 	}
 
-	/**
-	 * Get translations for content
-	 *
-	 * Only loads a single textdomain from the path, as specified by `domain`,
-	 * for performance reasons.
-	 *
-	 * WARNING: Do not store the returned pointer for long as the contents may
-	 * change with the next call to `getContentTranslations`.
-	 * */
-	Translations *getContentTranslations(const std::string &path,
-			const std::string &domain, const std::string &lang_code);
-
 private:
-	std::string m_last_translations_key;
-	/** Only the most recently used translation set is kept loaded */
-	Translations m_last_translations;
 
 	/** find and run the main menu script */
 	bool loadMainMenuScript();
@@ -203,9 +187,7 @@ private:
 	MainMenuData                         *m_data = nullptr;
 	/** texture source */
 	std::unique_ptr<ISimpleTextureSource> m_texture_source;
-	/** shader source */
-	std::unique_ptr<IWritableShaderSource> m_shader_source;
-	/** sound manager */
+	/** sound manager*/
 	std::unique_ptr<ISoundManager>        m_sound_manager;
 
 	/** representation of form source to be used in mainmenu formspec */
@@ -282,10 +264,16 @@ private:
 	/** initialize cloud subsystem */
 	void cloudInit();
 	/** do preprocessing for cloud subsystem */
-	void drawClouds(float dtime);
+	void cloudPreProcess();
+	/** do postprocessing for cloud subsystem */
+	void cloudPostProcess(u32 frametime_min, IrrlichtDevice *device);
 
 	/** internam data required for drawing clouds */
 	struct clouddata {
+		/** delta time since last cloud processing */
+		f32 dtime;
+		/** absolute time of last cloud processing */
+		u32 lasttime;
 		/** pointer to cloud class */
 		irr_ptr<Clouds> clouds;
 		/** camera required for drawing clouds */

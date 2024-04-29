@@ -19,13 +19,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include "constants.h"
-#include "irr_ptr.h"
 #include "irrlichttypes_extrabloated.h"
-#include "skyparams.h"
 #include <iostream>
-
-class IShaderSource;
+#include "constants.h"
+#include "skyparams.h"
 
 // Menu clouds
 class Clouds;
@@ -37,7 +34,7 @@ extern scene::ISceneManager *g_menucloudsmgr;
 class Clouds : public scene::ISceneNode
 {
 public:
-	Clouds(scene::ISceneManager* mgr, IShaderSource *ssrc,
+	Clouds(scene::ISceneManager* mgr,
 			s32 id,
 			u32 seed
 	);
@@ -75,7 +72,7 @@ public:
 
 	void update(const v3f &camera_p, const video::SColorf &color);
 
-	void updateCameraOffset(v3s16 camera_offset)
+	void updateCameraOffset(const v3s16 &camera_offset)
 	{
 		m_camera_offset = camera_offset;
 		updateBox();
@@ -85,29 +82,24 @@ public:
 
 	void setDensity(float density)
 	{
-		if (m_params.density == density)
-			return;
 		m_params.density = density;
-		invalidateMesh();
+		// currently does not need bounding
 	}
 
-	void setColorBright(video::SColor color_bright)
+	void setColorBright(const video::SColor &color_bright)
 	{
 		m_params.color_bright = color_bright;
 	}
 
-	void setColorAmbient(video::SColor color_ambient)
+	void setColorAmbient(const video::SColor &color_ambient)
 	{
 		m_params.color_ambient = color_ambient;
 	}
 
 	void setHeight(float height)
 	{
-		if (m_params.height == height)
-			return;
-		m_params.height = height;
+		m_params.height = height; // add bounding when necessary
 		updateBox();
-		invalidateMesh();
 	}
 
 	void setSpeed(v2f speed)
@@ -117,11 +109,8 @@ public:
 
 	void setThickness(float thickness)
 	{
-		if (m_params.thickness == thickness)
-			return;
 		m_params.thickness = thickness;
 		updateBox();
-		invalidateMesh();
 	}
 
 	bool isCameraInsideCloud() const { return m_camera_inside_cloud; }
@@ -137,33 +126,18 @@ private:
 				BS * 1000000.0f, height_bs + thickness_bs - BS * m_camera_offset.Y, BS * 1000000.0f);
 	}
 
-	void updateMesh();
-	void invalidateMesh()
-	{
-		m_mesh_valid = false;
-	}
-
 	bool gridFilled(int x, int y) const;
 
 	video::SMaterial m_material;
-	irr_ptr<scene::SMeshBuffer> m_meshbuffer;
-	// Value of m_origin at the time the mesh was last updated
-	v2f m_mesh_origin;
-	// Value of center_of_drawing_in_noise_i at the time the mesh was last updated
-	v2s16 m_last_noise_center;
-	// Was the mesh ever generated?
-	bool m_mesh_valid = false;
-
 	aabb3f m_box;
-	v2f m_origin;
 	u16 m_cloud_radius_i;
+	bool m_enable_3d;
 	u32 m_seed;
 	v3f m_camera_pos;
-
+	v2f m_origin;
 	v3s16 m_camera_offset;
-	bool m_camera_inside_cloud = false;
-
-	bool m_enable_shaders, m_enable_3d;
 	video::SColorf m_color = video::SColorf(1.0f, 1.0f, 1.0f, 1.0f);
 	CloudParams m_params;
+	bool m_camera_inside_cloud = false;
+
 };

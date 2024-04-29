@@ -18,14 +18,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
+with this program; ifnot, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
 #pragma once
 
 #include "sound_data.h"
-namespace sound { struct ALExtensions; }
 
 namespace sound {
 
@@ -52,8 +51,7 @@ class PlayingSound final
 public:
 	PlayingSound(ALuint source_id, std::shared_ptr<ISoundDataOpen> data, bool loop,
 			f32 volume, f32 pitch, f32 start_time,
-			const std::optional<std::pair<v3f, v3f>> &pos_vel_opt,
-			const ALExtensions &exts [[maybe_unused]]);
+			const std::optional<std::pair<v3f, v3f>> &pos_vel_opt);
 
 	~PlayingSound() noexcept
 	{
@@ -63,7 +61,7 @@ public:
 	DISABLE_CLASS_COPY(PlayingSound)
 
 	// return false means streaming finished
-	bool stepStream(bool playback_speed_changed = false);
+	bool stepStream();
 
 	// retruns true if it wasn't fading already
 	bool fade(f32 step, f32 target_gain) noexcept;
@@ -77,7 +75,7 @@ public:
 
 	f32 getGain() noexcept;
 
-	void setPitch(f32 pitch);
+	void setPitch(f32 pitch) noexcept { alSourcef(m_source_id, AL_PITCH, pitch); }
 
 	bool isStreaming() const noexcept { return m_data->isStreaming(); }
 

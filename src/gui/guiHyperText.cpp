@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "guiHyperText.h"
 #include "guiScrollBar.h"
 #include "client/fontengine.h"
+#include "client/tile.h"
 #include "IVideoDriver.h"
 #include "client/client.h"
 #include "client/renderingengine.h"
@@ -27,8 +28,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "inventory.h"
 #include "util/string.h"
 #include "irrlicht_changes/CGUITTFont.h"
-#include "mainmenumanager.h"
-#include "porting.h"
 
 using namespace irr::gui;
 
@@ -293,8 +292,8 @@ void ParsedText::pushChar(wchar_t c)
 		else
 			return;
 	} else {
-		enterElement(ELEMENT_TEXT);
 		m_empty_paragraph = false;
+		enterElement(ELEMENT_TEXT);
 	}
 	m_element->text += c;
 }
@@ -1053,10 +1052,14 @@ void GUIHyperText::checkHover(s32 X, s32 Y)
 		}
 	}
 
-	ICursorControl *cursor_control = RenderingEngine::get_raw_device()->getCursorControl();
-
-	if (cursor_control)
-		cursor_control->setActiveIcon(m_drawer.m_hovertag ? gui::ECI_HAND : gui::ECI_NORMAL);
+#ifndef HAVE_TOUCHSCREENGUI
+	if (m_drawer.m_hovertag)
+		RenderingEngine::get_raw_device()->getCursorControl()->setActiveIcon(
+				gui::ECI_HAND);
+	else
+		RenderingEngine::get_raw_device()->getCursorControl()->setActiveIcon(
+				gui::ECI_NORMAL);
+#endif
 }
 
 bool GUIHyperText::OnEvent(const SEvent &event)
@@ -1072,11 +1075,12 @@ bool GUIHyperText::OnEvent(const SEvent &event)
 	if (event.EventType == EET_GUI_EVENT &&
 			event.GUIEvent.EventType == EGET_ELEMENT_LEFT) {
 		m_drawer.m_hovertag = nullptr;
-
-		ICursorControl *cursor_control = RenderingEngine::get_raw_device()->getCursorControl();
-
-		if (cursor_control && cursor_control->isVisible())
+#ifndef HAVE_TOUCHSCREENGUI
+		gui::ICursorControl *cursor_control =
+				RenderingEngine::get_raw_device()->getCursorControl();
+		if (cursor_control->isVisible())
 			cursor_control->setActiveIcon(gui::ECI_NORMAL);
+#endif
 	}
 
 	if (event.EventType == EET_MOUSE_INPUT_EVENT) {
@@ -1084,7 +1088,7 @@ bool GUIHyperText::OnEvent(const SEvent &event)
 			checkHover(event.MouseInput.X, event.MouseInput.Y);
 
 		if (event.MouseInput.Event == EMIE_MOUSE_WHEEL && m_vscrollbar->isVisible()) {
-			m_vscrollbar->setPosInterpolated(m_vscrollbar->getTargetPos() -
+			m_vscrollbar->setPos(m_vscrollbar->getPos() -
 					event.MouseInput.Wheel * m_vscrollbar->getSmallStep());
 			m_text_scrollpos.Y = -m_vscrollbar->getPos();
 			m_drawer.draw(m_display_text_rect, m_text_scrollpos);
@@ -1108,18 +1112,6 @@ bool GUIHyperText::OnEvent(const SEvent &event)
 							newEvent.GUIEvent.EventType = EGET_BUTTON_CLICKED;
 							Parent->OnEvent(newEvent);
 						}
-
-						auto url_it = tag->attrs.find("url");
-						if (url_it != tag->attrs.end()) {
-							if (g_gamecallback) {
-								// in game
-								g_gamecallback->showOpenURLDialog(url_it->second);
-							} else {
-								// main menu
-								porting::open_url(url_it->second);
-							}
-						}
-
 						break;
 					}
 				}

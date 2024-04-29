@@ -114,9 +114,9 @@ int ModApiHttp::l_http_fetch_sync(lua_State *L)
 	infostream << "Mod performs HTTP request with URL " << req.url << std::endl;
 
 	HTTPFetchResult res;
-	bool completed = httpfetch_sync_interruptible(req, res);
+	httpfetch_sync(req, res);
 
-	push_http_fetch_result(L, res, completed);
+	push_http_fetch_result(L, res, true);
 
 	return 1;
 }

@@ -29,10 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/numeric.h"
 #include "log.h"
 
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
-
 #include <sstream>
 #include <iostream>
 #include <algorithm>

@@ -154,7 +154,7 @@ pattern_tr_filename = re.compile(r'\.tr$')
 pattern_bad_luastring = re.compile(
 	r'^@$|'	# single @, OR
 	r'[^@]@$|' # trailing unescaped @, OR
-	r'(?<!@)@(?=[^@1-9n])' # an @ that is not escaped or part of a placeholder
+	r'(?<!@)@(?=[^@1-9])' # an @ that is not escaped or part of a placeholder
 )
 
 # Attempt to read the mod's name from the mod.conf file or folder name. Returns None on failure
@@ -166,9 +166,16 @@ def get_modname(folder):
 				if match:
 					return match.group(1)
 	except FileNotFoundError:
-		folder_name = os.path.basename(folder)
-		# Special case when run in Minetest's builtin directory
-		return "__builtin" if folder_name == "builtin" else folder_name
+		if not os.path.isfile(os.path.join(folder, "modpack.txt")):
+			folder_name = os.path.basename(folder)
+			# Special case when run in Minetest's builtin directory
+			if folder_name == "builtin":
+				return "__builtin"
+			else:
+				return folder_name
+		else:
+			return None
+	return None
 
 # If there are already .tr files in /locale, returns a list of their names
 def get_existing_tr_files(folder):
@@ -194,16 +201,13 @@ def mkdir_p(path):
 # dKeyStrings is a dictionary of localized string to source file sets
 # dOld is a dictionary of existing translations and comments from
 # the previous version of this text
-def strings_to_text(dkeyStrings, dOld, mod_name, header_comments, textdomain, templ = None):
+def strings_to_text(dkeyStrings, dOld, mod_name, header_comments, textdomain):
 	# if textdomain is specified, insert it at the top
 	if textdomain != None:
 		lOut = [textdomain] # argument is full textdomain line
 	# otherwise, use mod name as textdomain automatically
 	else:
 		lOut = [f"# textdomain: {mod_name}"]
-	if templ is not None and templ[2] and (header_comments is None or not header_comments.startswith(templ[2])):
-		# header comments in the template file
-		lOut.append(templ[2])
 	if header_comments is not None:
 		lOut.append(header_comments)
 
@@ -228,14 +232,8 @@ def strings_to_text(dkeyStrings, dOld, mod_name, header_comments, textdomain, te
 			val = dOld.get(localizedString, {})
 			translation = val.get("translation", "")
 			comment = val.get("comment")
-			templ_comment = None
-			if templ:
-				templ_val = templ[0].get(localizedString, {})
-				templ_comment = templ_val.get("comment")
 			if params["break-long-lines"] and len(localizedString) > doublespace_threshold and not lOut[-1] == "":
 				lOut.append("")
-			if templ_comment != None and templ_comment != "" and (comment is None or comment == "" or not comment.startswith(templ_comment)):
-				lOut.append(templ_comment)
 			if comment != None and comment != "" and not comment.startswith("# textdomain:"):
 				lOut.append(comment)
 			lOut.append(f"{localizedString}={translation}")
@@ -434,20 +432,18 @@ def generate_template(folder, mod_name):
 		sources = sorted(list(sources), key=str.lower)
 		newSources = []
 		for i in sources:
-			i = i.replace("\\", "/")
 			newSources.append(f"{symbol_source_prefix} {i} {symbol_source_suffix}")
 		dOut[d] = newSources
 
 	templ_file = os.path.join(folder, "locale/template.txt")
 	write_template(templ_file, dOut, mod_name)
-	new_template = import_tr_file(templ_file) # re-import to get all new data
-	return (dOut, new_template)
+	return dOut
 
 # Updates an existing .tr file, copying the old one to a ".old" file
 # if any changes have happened
 # dNew is the data used to generate the template, it has all the
 # currently-existing localized strings
-def update_tr_file(dNew, templ, mod_name, tr_file):
+def update_tr_file(dNew, mod_name, tr_file):
 	if params["verbose"]:
 		print(f"updating {tr_file}")
 
@@ -455,7 +451,7 @@ def update_tr_file(dNew, templ, mod_name, tr_file):
 	dOld = tr_import[0]
 	textOld = tr_import[1]
 
-	textNew = strings_to_text(dNew, dOld, mod_name, tr_import[2], tr_import[3], templ)
+	textNew = strings_to_text(dNew, dOld, mod_name, tr_import[2], tr_import[3])
 
 	if textOld and textOld != textNew:
 		print(f"{tr_file} has changed.")
@@ -467,32 +463,27 @@ def update_tr_file(dNew, templ, mod_name, tr_file):
 
 # Updates translation files for the mod in the given folder
 def update_mod(folder):
-	if not os.path.exists(os.path.join(folder, "init.lua")):
-		print(f"Mod folder {folder} is missing init.lua, aborting.")
-		exit(1)
-	assert not is_modpack(folder)
 	modname = get_modname(folder)
-	print(f"Updating translations for {modname}")
-	(data, templ) = generate_template(folder, modname)
-	if data == None:
-		print(f"No translatable strings found in {modname}")
+	if modname is not None:
+		print(f"Updating translations for {modname}")
+		data = generate_template(folder, modname)
+		if data == None:
+			print(f"No translatable strings found in {modname}")
+		else:
+			for tr_file in get_existing_tr_files(folder):
+				update_tr_file(data, modname, os.path.join(folder, "locale/", tr_file))
 	else:
-		for tr_file in get_existing_tr_files(folder):
-			update_tr_file(data, templ, modname, os.path.join(folder, "locale/", tr_file))
+		print(f"Unable to determine the mod name in folder {folder}. Missing 'name' field in mod.conf.", file=_stderr)
+		exit(1)
 
-def is_modpack(folder):
-	return os.path.exists(os.path.join(folder, "modpack.txt")) or os.path.exists(os.path.join(folder, "modpack.conf"))
-
-def is_game(folder):
-	return os.path.exists(os.path.join(folder, "game.conf")) and os.path.exists(os.path.join(folder, "mods"))
-
-# Determines if the folder being pointed to is a game, mod or a mod pack
+# Determines if the folder being pointed to is a mod or a mod pack
 # and then runs update_mod accordingly
 def update_folder(folder):
-	if is_game(folder):
-		run_all_subfolders(os.path.join(folder, "mods"))
-	elif is_modpack(folder):
-		run_all_subfolders(folder)
+	is_modpack = os.path.exists(os.path.join(folder, "modpack.txt")) or os.path.exists(os.path.join(folder, "modpack.conf"))
+	if is_modpack:
+		subfolders = [f.path for f in os.scandir(folder) if f.is_dir() and not f.name.startswith('.')]
+		for subfolder in subfolders:
+			update_mod(subfolder)
 	else:
 		update_mod(folder)
 	print("Done.")

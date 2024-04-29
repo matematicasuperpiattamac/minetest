@@ -40,9 +40,8 @@ public:
 		m_env = env;
 	}
 
-	// virtual: Overwritten by MockInventoryManager for the unittests
-	virtual Inventory *getInventory(const InventoryLocation &loc);
-	virtual void setInventoryModified(const InventoryLocation &loc);
+	Inventory *getInventory(const InventoryLocation &loc);
+	void setInventoryModified(const InventoryLocation &loc);
 
 	// Creates or resets inventory
 	Inventory *createDetachedInventory(const std::string &name, IItemDefManager *idef,
@@ -53,7 +52,7 @@ public:
 	void sendDetachedInventories(const std::string &peer_name, bool incremental,
 			std::function<void(const std::string &, Inventory *)> apply_cb);
 
-protected:
+private:
 	struct DetachedInventory
 	{
 		std::unique_ptr<Inventory> inventory;

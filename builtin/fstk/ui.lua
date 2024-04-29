@@ -55,6 +55,11 @@ end
 -- Internal functions not to be called from user
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+function ui.cleanup()
+	for _,value in pairs(ui.childlist) do
+		value:hide()
+	end
+end
 
 function ui.update()
 	ui.overridden = false
@@ -62,8 +67,8 @@ function ui.update()
 
 	-- handle errors
 	if gamedata ~= nil and gamedata.reconnect_requested then
-		local error_message = core.formspec_escape(gamedata.errormessage)
-				or fgettext("<none available>")
+		local error_message = core.formspec_escape(
+				gamedata.errormessage or fgettext("<none available>"))
 		formspec = {
 			"size[14,8]",
 			"real_coordinates[true]",

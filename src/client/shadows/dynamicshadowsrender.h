@@ -27,7 +27,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class ShadowDepthShaderCB;
 class shadowScreenQuad;
 class shadowScreenQuadCB;
-class IWritableShaderSource;
 
 enum E_SHADOW_MODE : u8
 {
@@ -55,12 +54,8 @@ public:
 	static const int TEXTURE_LAYER_SHADOW = 3;
 
 	ShadowRenderer(IrrlichtDevice *device, Client *client);
-	~ShadowRenderer();
 
-	// Call before generating any shaders
-	// This is required because this class is initialized much later than all
-	// the shaders are dealt with.
-	static void preInit(IWritableShaderSource *shsrc);
+	~ShadowRenderer();
 
 	void initialize();
 

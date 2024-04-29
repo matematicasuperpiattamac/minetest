@@ -17,7 +17,6 @@ markdown_extensions:
     - pymdownx.superfences
     - pymdownx.highlight:
         css_class: codehilite
-    - gfm_admonition
 plugins:
     - search:
         separator: '[\s\-\.\(]+'

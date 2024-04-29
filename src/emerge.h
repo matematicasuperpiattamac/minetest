@@ -39,7 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class EmergeThread;
 class NodeDefManager;
 class Settings;
-class MapSettingsManager;
+
 class BiomeManager;
 class OreManager;
 class DecorationManager;
@@ -70,7 +70,7 @@ enum EmergeAction {
 	EMERGE_GENERATED,
 };
 
-constexpr const char *emergeActionStrs[] = {
+const static std::string emergeActionStrs[] = {
 	"cancelled",
 	"errored",
 	"from_memory",
@@ -107,18 +107,12 @@ public:
 
 	u32 gen_notify_on;
 	const std::set<u32> *gen_notify_on_deco_ids; // shared
-	const std::set<std::string> *gen_notify_on_custom; // shared
 
 	BiomeGen *biomegen;
 	BiomeManager *biomemgr;
 	OreManager *oremgr;
 	DecorationManager *decomgr;
 	SchematicManager *schemmgr;
-
-	inline GenerateNotifier createNotifier() const {
-		return GenerateNotifier(gen_notify_on, gen_notify_on_deco_ids,
-			gen_notify_on_custom);
-	}
 
 private:
 	EmergeParams(EmergeManager *parent, const BiomeGen *biomegen,
@@ -140,7 +134,6 @@ public:
 	// Generation Notify
 	u32 gen_notify_on = 0;
 	std::set<u32> gen_notify_on_deco_ids;
-	std::set<std::string> gen_notify_on_custom;
 
 	// Parameters passed to mapgens owned by ServerMap
 	// TODO(hmmmm): Remove this after mapgen helper methods using them

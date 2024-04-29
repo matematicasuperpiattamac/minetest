@@ -24,10 +24,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "activeobjectmgr.h" // client::ActiveObjectMgr
 #include <set>
 
-#ifdef SERVER
-#error Do not include in server builds
-#endif
-
 class ClientSimpleObject;
 class ClientMap;
 class ClientScripting;
@@ -135,8 +131,7 @@ public:
 
 	virtual void getSelectedActiveObjects(
 		const core::line3d<f32> &shootline_on_map,
-		std::vector<PointedThing> &objects,
-		const std::optional<Pointabilities> &pointabilities
+		std::vector<PointedThing> &objects
 	);
 
 	const std::set<std::string> &getPlayerNames() { return m_player_names; }

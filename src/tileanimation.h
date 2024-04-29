@@ -22,7 +22,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <iostream>
 #include "irrlichttypes_bloated.h"
 
-enum TileAnimationType : u8
+enum TileAnimationType
 {
 	TAT_NONE = 0,
 	TAT_VERTICAL_FRAMES = 1,
@@ -31,7 +31,7 @@ enum TileAnimationType : u8
 
 struct TileAnimationParams
 {
-	enum TileAnimationType type = TileAnimationType::TAT_NONE;
+	enum TileAnimationType type;
 	union
 	{
 		// struct {

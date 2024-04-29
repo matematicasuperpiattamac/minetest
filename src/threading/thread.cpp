@@ -59,11 +59,6 @@ DEALINGS IN THE SOFTWARE.
 	#include <mach/thread_act.h>
 #endif
 
-// See https://msdn.microsoft.com/en-us/library/hh920601.aspx#thread__native_handle_method
-#define win32_native_handle() ((HANDLE) getThreadHandle())
-
-thread_local Thread *current_thread = nullptr;
-
 
 Thread::Thread(const std::string &name) :
 	m_name(name),
@@ -86,8 +81,9 @@ Thread::~Thread()
 		m_running = false;
 
 #if defined(_WIN32)
-		TerminateThread(win32_native_handle(), 0);
-		CloseHandle(win32_native_handle());
+		// See https://msdn.microsoft.com/en-us/library/hh920601.aspx#thread__native_handle_method
+		TerminateThread((HANDLE) m_thread_obj->native_handle(), 0);
+		CloseHandle((HANDLE) m_thread_obj->native_handle());
 #else
 		// We need to pthread_kill instead on Android since NDKv5's pthread
 		// implementation is incomplete.
@@ -180,8 +176,6 @@ void Thread::threadProc(Thread *thr)
 	thr->m_kernel_thread_id = thread_self();
 #endif
 
-	current_thread = thr;
-
 	thr->setName(thr->m_name);
 
 	g_logger.registerThread(thr->m_name);
@@ -199,12 +193,6 @@ void Thread::threadProc(Thread *thr)
 	// released. We try to unlock it from caller thread and it's refused by system.
 	sf_lock.unlock();
 	g_logger.deregisterThread();
-}
-
-
-Thread *Thread::getCurrentThread()
-{
-	return current_thread;
 }
 
 
@@ -273,9 +261,13 @@ bool Thread::bindToProcessor(unsigned int proc_number)
 
 	return false;
 
-#elif defined(_WIN32)
+#elif _MSC_VER
 
-	return SetThreadAffinityMask(win32_native_handle(), 1 << proc_number);
+	return SetThreadAffinityMask(getThreadHandle(), 1 << proc_number);
+
+#elif __MINGW32__
+
+	return SetThreadAffinityMask(pthread_gethandle(getThreadHandle()), 1 << proc_number);
 
 #elif __FreeBSD_version >= 702106 || defined(__linux__) || defined(__DragonFly__)
 
@@ -328,9 +320,13 @@ bool Thread::bindToProcessor(unsigned int proc_number)
 
 bool Thread::setPriority(int prio)
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
 
-	return SetThreadPriority(win32_native_handle(), prio);
+	return SetThreadPriority(getThreadHandle(), prio);
+
+#elif __MINGW32__
+
+	return SetThreadPriority(pthread_gethandle(getThreadHandle()), prio);
 
 #else
 

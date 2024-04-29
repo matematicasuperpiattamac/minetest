@@ -36,12 +36,19 @@ ActiveObjectMgr::~ActiveObjectMgr()
 
 void ActiveObjectMgr::clearIf(const std::function<bool(ServerActiveObject *, u16)> &cb)
 {
-	for (auto &it : m_active_objects.iter()) {
-		if (!it.second)
-			continue;
-		if (cb(it.second.get(), it.first)) {
-			// Remove reference from m_active_objects
-			m_active_objects.remove(it.first);
+	// Make a defensive copy of the ids in case the passed callback changes the
+	// set of active objects.
+	// The callback is called for newly added objects iff they happen to reuse
+	// an old id.
+	std::vector<u16> ids = getAllIds();
+
+	for (u16 id : ids) {
+		auto it = m_active_objects.find(id);
+		if (it == m_active_objects.end())
+			continue; // obj was already removed
+		if (cb(it->second.get(), id)) {
+			// erase by id, `it` can be invalid now
+			removeObject(id);
 		}
 	}
 }
@@ -49,18 +56,20 @@ void ActiveObjectMgr::clearIf(const std::function<bool(ServerActiveObject *, u16
 void ActiveObjectMgr::step(
 		float dtime, const std::function<void(ServerActiveObject *)> &f)
 {
-	size_t count = 0;
+	g_profiler->avg("ActiveObjectMgr: SAO count [#]", m_active_objects.size());
 
-	for (auto &ao_it : m_active_objects.iter()) {
-		if (!ao_it.second)
-			continue;
-		count++;
-		f(ao_it.second.get());
+	// See above.
+	std::vector<u16> ids = getAllIds();
+
+	for (u16 id : ids) {
+		auto it = m_active_objects.find(id);
+		if (it == m_active_objects.end())
+			continue; // obj was removed
+		f(it->second.get());
 	}
-
-	g_profiler->avg("ActiveObjectMgr: SAO count [#]", count);
 }
 
+// clang-format off
 bool ActiveObjectMgr::registerObject(std::unique_ptr<ServerActiveObject> obj)
 {
 	assert(obj); // Pre-condition
@@ -91,17 +100,12 @@ bool ActiveObjectMgr::registerObject(std::unique_ptr<ServerActiveObject> obj)
 		return false;
 	}
 
-	auto obj_id = obj->getId(); 
-	m_active_objects.put(obj_id, std::move(obj));
+	auto obj_p = obj.get();
+	m_active_objects[obj->getId()] = std::move(obj);
 
-	auto new_size = m_active_objects.size();
 	verbosestream << "Server::ActiveObjectMgr::addActiveObjectRaw(): "
-			<< "Added id=" << obj_id << "; there are now ";
-	if (new_size == decltype(m_active_objects)::unknown)
-		verbosestream << "???";
-	else
-		verbosestream << new_size;
-	verbosestream << " active objects." << std::endl;
+			<< "Added id=" << obj_p->getId() << "; there are now "
+			<< m_active_objects.size() << " active objects." << std::endl;
 	return true;
 }
 
@@ -109,24 +113,27 @@ void ActiveObjectMgr::removeObject(u16 id)
 {
 	verbosestream << "Server::ActiveObjectMgr::removeObject(): "
 			<< "id=" << id << std::endl;
-
-	// this will take the object out of the map and then destruct it
-	bool ok = m_active_objects.remove(id);
-	if (!ok) {
+	auto it = m_active_objects.find(id);
+	if (it == m_active_objects.end()) {
 		infostream << "Server::ActiveObjectMgr::removeObject(): "
 				<< "id=" << id << " not found" << std::endl;
+		return;
 	}
+
+	// Delete the obj before erasing, as the destructor may indirectly access
+	// m_active_objects.
+	it->second.reset();
+	m_active_objects.erase(id); // `it` can be invalid now
 }
 
+// clang-format on
 void ActiveObjectMgr::getObjectsInsideRadius(const v3f &pos, float radius,
 		std::vector<ServerActiveObject *> &result,
 		std::function<bool(ServerActiveObject *obj)> include_obj_cb)
 {
 	float r2 = radius * radius;
-	for (auto &activeObject : m_active_objects.iter()) {
+	for (auto &activeObject : m_active_objects) {
 		ServerActiveObject *obj = activeObject.second.get();
-		if (!obj)
-			continue;
 		const v3f &objectpos = obj->getBasePosition();
 		if (objectpos.getDistanceFromSQ(pos) > r2)
 			continue;
@@ -140,10 +147,8 @@ void ActiveObjectMgr::getObjectsInArea(const aabb3f &box,
 		std::vector<ServerActiveObject *> &result,
 		std::function<bool(ServerActiveObject *obj)> include_obj_cb)
 {
-	for (auto &activeObject : m_active_objects.iter()) {
+	for (auto &activeObject : m_active_objects) {
 		ServerActiveObject *obj = activeObject.second.get();
-		if (!obj)
-			continue;
 		const v3f &objectpos = obj->getBasePosition();
 		if (!box.isPointInside(objectpos))
 			continue;
@@ -153,9 +158,9 @@ void ActiveObjectMgr::getObjectsInArea(const aabb3f &box,
 	}
 }
 
-void ActiveObjectMgr::getAddedActiveObjectsAroundPos(v3f player_pos, f32 radius,
-		f32 player_radius, const std::set<u16> &current_objects,
-		std::vector<u16> &added_objects)
+void ActiveObjectMgr::getAddedActiveObjectsAroundPos(const v3f &player_pos, f32 radius,
+		f32 player_radius, std::set<u16> &current_objects,
+		std::queue<u16> &added_objects)
 {
 	/*
 		Go through the object list,
@@ -164,7 +169,7 @@ void ActiveObjectMgr::getAddedActiveObjectsAroundPos(v3f player_pos, f32 radius,
 		- discard objects that are found in current_objects.
 		- add remaining objects to added_objects
 	*/
-	for (auto &ao_it : m_active_objects.iter()) {
+	for (auto &ao_it : m_active_objects) {
 		u16 id = ao_it.first;
 
 		// Get object
@@ -188,7 +193,7 @@ void ActiveObjectMgr::getAddedActiveObjectsAroundPos(v3f player_pos, f32 radius,
 		if (n != current_objects.end())
 			continue;
 		// Add to added_objects
-		added_objects.push_back(id);
+		added_objects.push(id);
 	}
 }
 

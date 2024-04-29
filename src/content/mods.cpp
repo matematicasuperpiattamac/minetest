@@ -108,8 +108,10 @@ bool parseModContents(ModSpec &spec)
 	if (info.exists("depends")) {
 		mod_conf_has_depends = true;
 		std::string dep = info.get("depends");
+		// clang-format off
 		dep.erase(std::remove_if(dep.begin(), dep.end(),
 				static_cast<int (*)(int)>(&std::isspace)), dep.end());
+		// clang-format on
 		for (const auto &dependency : str_split(dep, ',')) {
 			spec.depends.insert(dependency);
 		}
@@ -118,8 +120,10 @@ bool parseModContents(ModSpec &spec)
 	if (info.exists("optional_depends")) {
 		mod_conf_has_depends = true;
 		std::string dep = info.get("optional_depends");
+		// clang-format off
 		dep.erase(std::remove_if(dep.begin(), dep.end(),
 				static_cast<int (*)(int)>(&std::isspace)), dep.end());
+		// clang-format on
 		for (const auto &dependency : str_split(dep, ',')) {
 			spec.optdepends.insert(dependency);
 		}
@@ -228,7 +232,7 @@ bool ModStorage::contains(const std::string &name) const
 	return m_database->hasModEntry(m_mod_name, name);
 }
 
-bool ModStorage::setString(const std::string &name, std::string_view var)
+bool ModStorage::setString(const std::string &name, const std::string &var)
 {
 	if (var.empty())
 		return m_database->removeModEntry(m_mod_name, name);

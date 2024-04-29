@@ -19,9 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 
-#include "irrlichttypes.h"
-
-enum ModifiedState : u16
+enum ModifiedState
 {
 	// Has not been modified.
 	MOD_STATE_CLEAN = 0,

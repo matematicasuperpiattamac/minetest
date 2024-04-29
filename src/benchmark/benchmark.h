@@ -22,5 +22,5 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "config.h"
 
 #if BUILD_BENCHMARKS
-extern bool run_benchmarks(const char *arg = nullptr);
+extern int run_benchmarks();
 #endif

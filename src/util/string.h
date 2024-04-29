@@ -20,15 +20,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include "irrlichttypes_bloated.h"
-#ifndef SERVER
 #include "irrString.h"
-#endif
 #include <cstdlib>
 #include <string>
-#include <string_view>
 #include <cstring>
 #include <vector>
 #include <limits>
+#include <map>
 #include <sstream>
 #include <iomanip>
 #include <cctype>
@@ -45,19 +43,13 @@ class Translations;
 	( (unsigned int)(x) <= 0x7e))
 
 // Checks whether a value is in a Unicode private use area
-#define IS_PRIVATE_USE_CHAR16(x)    \
-	((wchar_t)(x) >= 0xE000 &&   \
-	  (wchar_t)(x) <= 0xF8FF)
-#define IS_PRIVATE_USE_CHAR32(x)    \
-	(((wchar_t)(x) >= 0xF0000 &&  \
+#define IS_PRIVATE_USE_CHAR(x)    \
+	(((wchar_t)(x) >= 0xE000 &&   \
+	  (wchar_t)(x) <= 0xF8FF) ||  \
+	 ((wchar_t)(x) >= 0xF0000 &&  \
 	  (wchar_t)(x) <= 0xFFFFD) || \
 	 ((wchar_t)(x) >= 0x100000 && \
-	  (wchar_t)(x) <= 0x10FFFD))
-#if WCHAR_MAX > 0xFFFF
-#define IS_PRIVATE_USE_CHAR(x) (IS_PRIVATE_USE_CHAR16(x) || IS_PRIVATE_USE_CHAR32(x))
-#else
-#define IS_PRIVATE_USE_CHAR(x) IS_PRIVATE_USE_CHAR16(x)
-#endif
+	  (wchar_t)(x) <= 0x10FFFD))  \
 
 // Checks whether a byte is an inner byte for an utf-8 multibyte sequence
 #define IS_UTF8_MULTB_INNER(x)       \
@@ -84,38 +76,19 @@ struct FlagDesc {
 
 // Try to avoid converting between wide and UTF-8 unless you need to
 // input/output stuff via Irrlicht
-std::wstring utf8_to_wide(std::string_view input);
-std::string wide_to_utf8(std::wstring_view input);
+std::wstring utf8_to_wide(const std::string &input);
+std::string wide_to_utf8(const std::wstring &input);
 
-std::string urlencode(std::string_view str);
-std::string urldecode(std::string_view str);
-
+std::string urlencode(const std::string &str);
+std::string urldecode(const std::string &str);
 u32 readFlagString(std::string str, const FlagDesc *flagdesc, u32 *flagmask);
 std::string writeFlagString(u32 flags, const FlagDesc *flagdesc, u32 flagmask);
-
-size_t mystrlcpy(char *dst, const char *src, size_t size) noexcept;
-char *mystrtok_r(char *s, const char *sep, char **lasts) noexcept;
-
+size_t mystrlcpy(char *dst, const char *src, size_t size);
+char *mystrtok_r(char *s, const char *sep, char **lasts);
 u64 read_seed(const char *str);
 bool parseColorString(const std::string &value, video::SColor &color, bool quiet,
 		unsigned char default_alpha = 0xff);
-std::string encodeHexColorString(video::SColor color);
 
-/**
- * Converts a letter to lowercase, with safe handling of the char type and non-ASCII.
- * @param c input letter
- * @returns same letter but lowercase
-*/
-inline char my_tolower(char c)
-{
-	// By design this function cannot handle any Unicode (codepoints don't fit into char),
-	// but make sure to pass it through unchanged.
-	// tolower() can mangle it if the POSIX locale is not UTF-8.
-	if (static_cast<unsigned char>(c) > 0x7f)
-		return c;
-	// toupper(3): "If the argument c is of type char, it must be cast to unsigned char"
-	return tolower(static_cast<unsigned char>(c));
-}
 
 /**
  * Returns a copy of \p str with spaces inserted at the right hand side to ensure
@@ -141,30 +114,21 @@ inline std::string padStringRight(std::string str, size_t len)
  *
  * @return If no end could be removed then "" is returned.
  */
-inline std::string_view removeStringEnd(std::string_view str,
+inline std::string removeStringEnd(const std::string &str,
 		const char *ends[])
 {
 	const char **p = ends;
 
 	for (; *p && (*p)[0] != '\0'; p++) {
-		std::string_view end(*p);
+		std::string end = *p;
 		if (str.size() < end.size())
 			continue;
 		if (str.compare(str.size() - end.size(), end.size(), end) == 0)
 			return str.substr(0, str.size() - end.size());
 	}
 
-	return std::string_view();
+	return "";
 }
-
-
-#define MAKE_VARIANT(_name, _t0, _t1) \
-	template <typename T, typename... Args> \
-	inline auto _name(_t0 arg1, _t1 arg2, Args&&... args) \
-	{ \
-		return (_name)(std::basic_string_view<T>(arg1), std::basic_string_view<T>(arg2), \
-			std::forward<Args>(args)...); \
-	}
 
 
 /**
@@ -177,8 +141,8 @@ inline std::string_view removeStringEnd(std::string_view str,
  * @return true if the strings match
  */
 template <typename T>
-inline bool str_equal(std::basic_string_view<T> s1,
-		std::basic_string_view<T> s2,
+inline bool str_equal(const std::basic_string<T> &s1,
+		const std::basic_string<T> &s2,
 		bool case_insensitive = false)
 {
 	if (!case_insensitive)
@@ -188,21 +152,11 @@ inline bool str_equal(std::basic_string_view<T> s1,
 		return false;
 
 	for (size_t i = 0; i < s1.size(); ++i)
-		if (my_tolower(s1[i]) != my_tolower(s2[i]))
+		if(tolower(s1[i]) != tolower(s2[i]))
 			return false;
 
 	return true;
 }
-
-// For some reason an std::string will not implicitly get converted
-// to an std::basic_string_view<char> in the template case above, so we need
-// these three wrappers. It works if you take out the template parameters.
-// see also <https://stackoverflow.com/questions/68380141/>
-MAKE_VARIANT(str_equal, const std::basic_string<T> &, const std::basic_string<T> &)
-
-MAKE_VARIANT(str_equal, std::basic_string_view<T>, const std::basic_string<T> &)
-
-MAKE_VARIANT(str_equal, const std::basic_string<T> &, std::basic_string_view<T>)
 
 
 /**
@@ -216,8 +170,8 @@ MAKE_VARIANT(str_equal, const std::basic_string<T> &, std::basic_string_view<T>)
  * @return true if the str begins with prefix
  */
 template <typename T>
-inline bool str_starts_with(std::basic_string_view<T> str,
-		std::basic_string_view<T> prefix,
+inline bool str_starts_with(const std::basic_string<T> &str,
+		const std::basic_string<T> &prefix,
 		bool case_insensitive = false)
 {
 	if (str.size() < prefix.size())
@@ -227,22 +181,29 @@ inline bool str_starts_with(std::basic_string_view<T> str,
 		return str.compare(0, prefix.size(), prefix) == 0;
 
 	for (size_t i = 0; i < prefix.size(); ++i)
-		if (my_tolower(str[i]) != my_tolower(prefix[i]))
+		if (tolower(str[i]) != tolower(prefix[i]))
 			return false;
 	return true;
 }
 
-// (same conversion issue here)
-MAKE_VARIANT(str_starts_with, const std::basic_string<T> &, const std::basic_string<T> &)
-
-MAKE_VARIANT(str_starts_with, std::basic_string_view<T>, const std::basic_string<T> &)
-
-MAKE_VARIANT(str_starts_with, const std::basic_string<T> &, std::basic_string_view<T>)
-
-// (the same but with char pointers, only for the prefix argument)
-MAKE_VARIANT(str_starts_with, const std::basic_string<T> &, const T*)
-
-MAKE_VARIANT(str_starts_with, std::basic_string_view<T>, const T*)
+/**
+ * Check whether \p str begins with the string prefix. If \p case_insensitive
+ * is true then the check is case insensitve (default is false; i.e. case is
+ * significant).
+ *
+ * @param str
+ * @param prefix
+ * @param case_insensitive
+ * @return true if the str begins with prefix
+ */
+template <typename T>
+inline bool str_starts_with(const std::basic_string<T> &str,
+		const T *prefix,
+		bool case_insensitive = false)
+{
+	return str_starts_with(str, std::basic_string<T>(prefix),
+			case_insensitive);
+}
 
 
 /**
@@ -256,8 +217,8 @@ MAKE_VARIANT(str_starts_with, std::basic_string_view<T>, const T*)
  * @return true if the str begins with suffix
  */
 template <typename T>
-inline bool str_ends_with(std::basic_string_view<T> str,
-		std::basic_string_view<T> suffix,
+inline bool str_ends_with(const std::basic_string<T> &str,
+		const std::basic_string<T> &suffix,
 		bool case_insensitive = false)
 {
 	if (str.size() < suffix.size())
@@ -268,25 +229,30 @@ inline bool str_ends_with(std::basic_string_view<T> str,
 		return str.compare(start, suffix.size(), suffix) == 0;
 
 	for (size_t i = 0; i < suffix.size(); ++i)
-		if (my_tolower(str[start + i]) != my_tolower(suffix[i]))
+		if (tolower(str[start + i]) != tolower(suffix[i]))
 			return false;
 	return true;
 }
 
-// (same conversion issue here)
-MAKE_VARIANT(str_ends_with, const std::basic_string<T> &, const std::basic_string<T> &)
 
-MAKE_VARIANT(str_ends_with, std::basic_string_view<T>, const std::basic_string<T> &)
-
-MAKE_VARIANT(str_ends_with, const std::basic_string<T> &, std::basic_string_view<T>)
-
-// (the same but with char pointers, only for the suffix argument)
-MAKE_VARIANT(str_ends_with, const std::basic_string<T> &, const T*)
-
-MAKE_VARIANT(str_ends_with, std::basic_string_view<T>, const T*)
-
-
-#undef MAKE_VARIANT
+/**
+ * Check whether \p str ends with the string suffix. If \p case_insensitive
+ * is true then the check is case insensitve (default is false; i.e. case is
+ * significant).
+ *
+ * @param str
+ * @param suffix
+ * @param case_insensitive
+ * @return true if the str begins with suffix
+ */
+template <typename T>
+inline bool str_ends_with(const std::basic_string<T> &str,
+		const T *suffix,
+		bool case_insensitive = false)
+{
+	return str_ends_with(str, std::basic_string<T>(suffix),
+			case_insensitive);
+}
 
 
 /**
@@ -315,21 +281,24 @@ inline std::vector<std::basic_string<T> > str_split(
  * @param str
  * @return A copy of \p str converted to all lowercase characters.
  */
-inline std::string lowercase(std::string_view str)
+inline std::string lowercase(const std::string &str)
 {
 	std::string s2;
-	s2.resize(str.size());
-	for (size_t i = 0; i < str.size(); i++)
-		s2[i] = my_tolower(str[i]);
+
+	s2.reserve(str.size());
+
+	for (char i : str)
+		s2 += tolower(i);
+
 	return s2;
 }
 
 
 /**
  * @param str
- * @return A view of \p str with leading and trailing whitespace removed.
+ * @return A copy of \p str with leading and trailing whitespace removed.
  */
-inline std::string_view trim(std::string_view str)
+inline std::string trim(const std::string &str)
 {
 	size_t front = 0;
 	size_t back = str.size();
@@ -343,26 +312,6 @@ inline std::string_view trim(std::string_view str)
 	return str.substr(front, back - front);
 }
 
-// If input was a temporary string keep it one to make sure patterns like
-// trim(func_that_returns_str()) are predictable regarding memory allocation
-// and don't lead to UAF. ↓ ↓ ↓
-
-/**
- * @param str
- * @return A copy of \p str with leading and trailing whitespace removed.
- */
-inline std::string trim(std::string &&str)
-{
-	std::string ret(trim(std::string_view(str)));
-	return ret;
-}
-
-// The above declaration causes ambiguity with char pointers so we have to fix that:
-inline std::string_view trim(const char *str)
-{
-	return trim(std::string_view(str));
-}
-
 
 /**
  * Returns whether \p str should be regarded as (bool) true.  Case and leading
@@ -370,7 +319,7 @@ inline std::string_view trim(const char *str)
  * true are "y", "yes", "true" and any number that is not 0.
  * @param str
  */
-inline bool is_yes(std::string_view str)
+inline bool is_yes(const std::string &str)
 {
 	std::string s2 = lowercase(trim(str));
 
@@ -427,7 +376,7 @@ inline float mystof(const std::string &str)
 template <typename T>
 inline T from_string(const std::string &str)
 {
-	std::istringstream tmp(str);
+	std::stringstream tmp(str);
 	T t;
 	tmp >> t;
 	return t;
@@ -435,6 +384,42 @@ inline T from_string(const std::string &str)
 
 /// Returns a 64-bit signed value represented by the string \p str (decimal).
 inline s64 stoi64(const std::string &str) { return from_string<s64>(str); }
+
+#if __cplusplus < 201103L
+namespace std {
+
+/// Returns a string representing the value \p val.
+template <typename T>
+inline string to_string(T val)
+{
+	ostringstream oss;
+	oss << val;
+	return oss.str();
+}
+#define DEFINE_STD_TOSTRING_FLOATINGPOINT(T)		\
+	template <>					\
+	inline string to_string<T>(T val)		\
+	{						\
+		ostringstream oss;			\
+		oss << std::fixed			\
+			<< std::setprecision(6)		\
+			<< val;				\
+		return oss.str();			\
+	}
+DEFINE_STD_TOSTRING_FLOATINGPOINT(float)
+DEFINE_STD_TOSTRING_FLOATINGPOINT(double)
+DEFINE_STD_TOSTRING_FLOATINGPOINT(long double)
+
+#undef DEFINE_STD_TOSTRING_FLOATINGPOINT
+
+/// Returns a wide string representing the value \p val
+template <typename T>
+inline wstring to_wstring(T val)
+{
+	return utf8_to_wide(to_string(val));
+}
+}
+#endif
 
 /// Returns a string representing the decimal value of the 32-bit value \p i.
 inline std::string itos(s32 i) { return std::to_string(i); }
@@ -457,8 +442,8 @@ inline std::string ftos(float f)
  * @param pattern The pattern to replace.
  * @param replacement What to replace the pattern with.
  */
-inline void str_replace(std::string &str, std::string_view pattern,
-		std::string_view replacement)
+inline void str_replace(std::string &str, const std::string &pattern,
+		const std::string &replacement)
 {
 	std::string::size_type start = str.find(pattern, 0);
 	while (start != str.npos) {
@@ -468,7 +453,7 @@ inline void str_replace(std::string &str, std::string_view pattern,
 }
 
 /**
- * Escapes characters that cannot be used in formspecs
+ * Escapes characters [ ] \ , ; that cannot be used in formspecs
  */
 inline void str_formspec_escape(std::string &str)
 {
@@ -500,7 +485,7 @@ void str_replace(std::string &str, char from, char to);
  *
  * @see string_allowed_blacklist()
  */
-inline bool string_allowed(std::string_view str, std::string_view allowed_chars)
+inline bool string_allowed(const std::string &str, const std::string &allowed_chars)
 {
 	return str.find_first_not_of(allowed_chars) == str.npos;
 }
@@ -516,8 +501,8 @@ inline bool string_allowed(std::string_view str, std::string_view allowed_chars)
 
  * @see string_allowed()
  */
-inline bool string_allowed_blacklist(std::string_view str,
-		std::string_view blacklisted_chars)
+inline bool string_allowed_blacklist(const std::string &str,
+		const std::string &blacklisted_chars)
 {
 	return str.find_first_of(blacklisted_chars) == str.npos;
 }
@@ -527,7 +512,7 @@ inline bool string_allowed_blacklist(std::string_view str,
  * Create a string based on \p from where a newline is forcefully inserted
  * every \p row_len characters.
  *
- * @note This function does not honour word wraps and blindly inserts a newline
+ * @note This function does not honour word wraps and blindy inserts a newline
  *	every \p row_len characters whether it breaks a word or not.  It is
  *	intended to be used for, for example, showing paths in the GUI.
  *
@@ -536,10 +521,26 @@ inline bool string_allowed_blacklist(std::string_view str,
  *
  * @param from The (utf-8) string to be wrapped into rows.
  * @param row_len The row length (in characters).
- * @param has_color_codes Whether the source string has colorize codes.
  * @return A new string with the wrapping applied.
  */
-std::string wrap_rows(std::string_view from, unsigned row_len, bool has_color_codes = false);
+inline std::string wrap_rows(const std::string &from,
+		unsigned row_len)
+{
+	std::string to;
+
+	size_t character_idx = 0;
+	for (size_t i = 0; i < from.size(); i++) {
+		if (!IS_UTF8_MULTB_INNER(from[i])) {
+			// Wrap string after last inner byte of char
+			if (character_idx > 0 && character_idx % row_len == 0)
+				to += '\n';
+			character_idx++;
+		}
+		to += from[i];
+	}
+
+	return to;
+}
 
 
 /**
@@ -549,7 +550,6 @@ template <typename T>
 inline std::basic_string<T> unescape_string(const std::basic_string<T> &s)
 {
 	std::basic_string<T> res;
-	res.reserve(s.size());
 
 	for (size_t i = 0; i < s.length(); i++) {
 		if (s[i] == '\\') {
@@ -573,7 +573,6 @@ template <typename T>
 std::basic_string<T> unescape_enriched(const std::basic_string<T> &s)
 {
 	std::basic_string<T> output;
-	output.reserve(s.size());
 	size_t i = 0;
 	while (i < s.length()) {
 		if (s[i] == '\x1b') {
@@ -646,7 +645,7 @@ inline std::wstring unescape_translate(const std::wstring &s) {
  * @return true if to_check is not empty and all characters in to_check are
  *	decimal digits, otherwise false
  */
-inline bool is_number(std::string_view to_check)
+inline bool is_number(const std::string &to_check)
 {
 	for (char i : to_check)
 		if (!std::isdigit(i))
@@ -720,7 +719,7 @@ inline const std::string duration_to_string(int sec)
  * @return A std::string
  */
 inline std::string str_join(const std::vector<std::string> &list,
-		std::string_view delimiter)
+		const std::string &delimiter)
 {
 	std::ostringstream oss;
 	bool first = true;
@@ -733,25 +732,23 @@ inline std::string str_join(const std::vector<std::string> &list,
 	return oss.str();
 }
 
-#ifndef SERVER
 /**
  * Create a UTF8 std::string from an irr::core::stringw.
  */
 inline std::string stringw_to_utf8(const irr::core::stringw &input)
 {
-	std::wstring_view sv(input.c_str(), input.size());
-	return wide_to_utf8(sv);
+	std::wstring str(input.c_str());
+	return wide_to_utf8(str);
 }
 
  /**
   * Create an irr::core:stringw from a UTF8 std::string.
   */
-inline irr::core::stringw utf8_to_stringw(std::string_view input)
+inline irr::core::stringw utf8_to_stringw(const std::string &input)
 {
 	std::wstring str = utf8_to_wide(input);
-	return irr::core::stringw(str.c_str(), str.size());
+	return irr::core::stringw(str.c_str());
 }
-#endif
 
 /**
  * Sanitize the name of a new directory. This consists of two stages:
@@ -759,7 +756,7 @@ inline irr::core::stringw utf8_to_stringw(std::string_view input)
  *    and add a prefix to them
  * 2. Remove 'unsafe' characters from the name by replacing them with '_'
  */
-std::string sanitizeDirName(std::string_view str, std::string_view optional_prefix);
+std::string sanitizeDirName(const std::string &str, const std::string &optional_prefix);
 
 /**
  * Prints a sanitized version of a string without control characters.
@@ -767,12 +764,12 @@ std::string sanitizeDirName(std::string_view str, std::string_view optional_pref
  * ASCII control characters are replaced with their hex encoding in angle
  * brackets (e.g. "a\x1eb" -> "a<1e>b").
  */
-void safe_print_string(std::ostream &os, std::string_view str);
+void safe_print_string(std::ostream &os, const std::string &str);
 
 /**
  * Parses a string of form `(1, 2, 3)` to a v3f
  *
- * @param str string
- * @return float vector
+ * @param str String
+ * @return
  */
-v3f str_to_v3f(std::string_view str);
+v3f str_to_v3f(const std::string &str);

@@ -1,7 +1,8 @@
-ARG DOCKER_IMAGE=alpine:3.19
+ARG DOCKER_IMAGE=alpine:3.16
 FROM $DOCKER_IMAGE AS dev
 
-ENV SPATIALINDEX_VERSION master
+ENV IRRLICHT_VERSION master
+ENV SPATIALINDEX_VERSION 1.9.3
 ENV LUAJIT_VERSION v2.1
 
 RUN apk add --no-cache git build-base cmake curl-dev zlib-dev zstd-dev \
@@ -9,7 +10,7 @@ RUN apk add --no-cache git build-base cmake curl-dev zlib-dev zstd-dev \
 		gmp-dev jsoncpp-dev ninja ca-certificates
 
 WORKDIR /usr/src/
-RUN git clone --recursive https://github.com/jupp0r/prometheus-cpp && \
+RUN git clone --recursive https://github.com/jupp0r/prometheus-cpp/ && \
 		cd prometheus-cpp && \
 		cmake -B build \
 			-DCMAKE_INSTALL_PREFIX=/usr/local \
@@ -28,8 +29,10 @@ RUN git clone --recursive https://github.com/jupp0r/prometheus-cpp && \
 	cd /usr/src/ && \
 	git clone --recursive https://luajit.org/git/luajit.git -b ${LUAJIT_VERSION} && \
 		cd luajit && \
-		make amalg && make install && \
-	cd /usr/src/
+		make && make install && \
+	cd /usr/src/ && \
+	git clone --depth=1 https://github.com/minetest/irrlicht/ -b ${IRRLICHT_VERSION} && \
+		cp -r irrlicht/include /usr/include/irrlichtmt
 
 FROM dev as builder
 
@@ -45,7 +48,6 @@ COPY lib /usr/src/minetest/lib
 COPY misc /usr/src/minetest/misc
 COPY po /usr/src/minetest/po
 COPY src /usr/src/minetest/src
-COPY irr /usr/src/minetest/irr
 COPY textures /usr/src/minetest/textures
 
 WORKDIR /usr/src/minetest
@@ -54,12 +56,13 @@ RUN cmake -B build \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SERVER=TRUE \
 		-DENABLE_PROMETHEUS=TRUE \
-		-DBUILD_UNITTESTS=FALSE -DBUILD_BENCHMARKS=FALSE \
+		-DBUILD_UNITTESTS=FALSE \
 		-DBUILD_CLIENT=FALSE \
 		-GNinja && \
 	cmake --build build && \
 	cmake --install build
 
+ARG DOCKER_IMAGE=alpine:3.16
 FROM $DOCKER_IMAGE AS runtime
 
 RUN apk add --no-cache curl gmp libstdc++ libgcc libpq jsoncpp zstd-libs \

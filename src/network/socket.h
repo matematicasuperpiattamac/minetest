@@ -34,24 +34,23 @@ class UDPSocket
 {
 public:
 	UDPSocket() = default;
-	UDPSocket(bool ipv6); // calls init()
-	~UDPSocket();
-	bool init(bool ipv6, bool noExceptions = false);
 
+	UDPSocket(bool ipv6);
+	~UDPSocket();
 	void Bind(Address addr);
+
+	bool init(bool ipv6, bool noExceptions = false);
 
 	void Send(const Address &destination, const void *data, int size);
 	// Returns -1 if there is no data
 	int Receive(Address &sender, void *data, int size);
+	int GetHandle(); // For debugging purposes only
 	void setTimeoutMs(int timeout_ms);
 	// Returns true if there is data, false if timeout occurred
 	bool WaitData(int timeout_ms);
 
-	// Debugging purposes only
-	int GetHandle() const { return m_handle; };
-
 private:
-	int m_handle = -1;
-	int m_timeout_ms = -1;
-	unsigned short m_addr_family = 0;
+	int m_handle;
+	int m_timeout_ms;
+	int m_addr_family;
 };

@@ -70,13 +70,14 @@ public:
 	}
 	void dereg(MtEvent::Type type, event_receive_func f, void *data) override
 	{
-		auto i = m_dest.find(type);
+		std::map<MtEvent::Type, Dest>::iterator i = m_dest.find(type);
 		if (i != m_dest.end()) {
 			std::list<FuncSpec> &funcs = i->second.funcs;
-			for (auto j = funcs.begin(); j != funcs.end(); ) {
+			auto j = funcs.begin();
+			while (j != funcs.end()) {
 				bool remove = (j->f == f && (!data || j->d == data));
 				if (remove)
-					j = funcs.erase(j);
+					funcs.erase(j++);
 				else
 					++j;
 			}

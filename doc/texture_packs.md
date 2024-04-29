@@ -25,14 +25,8 @@ texture pack. The name must not be “base”.
 ### `texture_pack.conf`
 A key-value config file with the following keys:
 
-* `name`: The texture pack name. Allows Minetest to determine the texture pack name even if
-  the folder is wrongly named.
-* `title` - human-readable title
+* `title` - human readable title
 * `description` - short description, shown in the content tab
-* `author`: The author's ContentDB username.
-* `textdomain`: Textdomain used to translate title and description.
-  Defaults to the texture pack name.
-  See [Translating content meta](lua_api.md#translating-content-meta).
 
 ### `description.txt`
 **Deprecated**, you should use texture_pack.conf instead.
@@ -139,6 +133,11 @@ are placeholders intended to be overwritten by the game.
 
 ### Android textures
 
+* `down_arrow.png`
+* `left_arrow.png`
+* `right_arrow.png`
+* `up_arrow.png`
+
 * `drop_btn.png`
 * `fast_btn.png`
 * `fly_btn.png`
@@ -211,8 +210,7 @@ Here are targets you can choose from:
 Nodes support all targets, but other items only support 'inventory'
 and 'wield'.
 
-¹ : `N` is an integer [0,255]. Sets align_style = "world" and scale = N on the tile,
-     refer to lua_api.md for details.
+¹ : `N` is an integer [0,255]. Sets align_style = "world" and scale = N on the tile, refer to lua_api.md for details.
 
 ### Using the special targets
 

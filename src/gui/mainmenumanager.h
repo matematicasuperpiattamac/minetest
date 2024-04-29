@@ -34,7 +34,7 @@ public:
 	virtual void disconnect() = 0;
 	virtual void changePassword() = 0;
 	virtual void changeVolume() = 0;
-	virtual void showOpenURLDialog(const std::string &url) = 0;
+
 	virtual void signalKeyConfigChange() = 0;
 };
 
@@ -80,7 +80,7 @@ public:
 		return mm && mm->preprocessEvent(event);
 	}
 
-	size_t menuCount() const
+	u32 menuCount()
 	{
 		return m_stack.size();
 	}
@@ -95,16 +95,12 @@ public:
 		return false;
 	}
 
-	// FIXME: why isn't this private?
 	std::list<gui::IGUIElement*> m_stack;
 };
 
 extern MainMenuManager g_menumgr;
 
-static inline bool isMenuActive()
-{
-	return g_menumgr.menuCount() != 0;
-}
+extern bool isMenuActive();
 
 class MainGameCallback : public IGameCallback
 {
@@ -112,48 +108,44 @@ public:
 	MainGameCallback() = default;
 	virtual ~MainGameCallback() = default;
 
-	void exitToOS() override
+	virtual void exitToOS()
 	{
 		shutdown_requested = true;
 	}
 
-	void disconnect() override
+	virtual void disconnect()
 	{
 		disconnect_requested = true;
 	}
 
-	void changePassword() override
+	virtual void changePassword()
 	{
 		changepassword_requested = true;
 	}
 
-	void changeVolume() override
+	virtual void changeVolume()
 	{
 		changevolume_requested = true;
 	}
 
-	void keyConfig() override
+	virtual void keyConfig()
 	{
 		keyconfig_requested = true;
 	}
 
-	void signalKeyConfigChange() override
+	virtual void signalKeyConfigChange()
 	{
 		keyconfig_changed = true;
 	}
 
-	void showOpenURLDialog(const std::string &url) override
-	{
-		show_open_url_dialog = url;
-	}
 
 	bool disconnect_requested = false;
 	bool changepassword_requested = false;
 	bool changevolume_requested = false;
 	bool keyconfig_requested = false;
 	bool shutdown_requested = false;
+
 	bool keyconfig_changed = false;
-	std::string show_open_url_dialog = "";
 };
 
 extern MainGameCallback *g_gamecallback;

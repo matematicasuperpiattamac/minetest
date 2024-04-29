@@ -19,9 +19,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "irrlichttypes_extrabloated.h"
 #include "util/string.h"
-
-class ISimpleTextureSource;
-
+#include "client/tile.h" // ITextureSource
 
 class GUIBackgroundImage : public gui::IGUIElement
 {

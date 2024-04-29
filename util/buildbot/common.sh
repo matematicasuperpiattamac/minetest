@@ -3,19 +3,16 @@ CORE_BRANCH=master
 CORE_NAME=minetest
 
 ogg_version=1.3.5
-openal_version=1.23.1
+openal_version=1.23.0
 vorbis_version=1.3.7
-curl_version=8.5.0
+curl_version=8.0.1
 gettext_version=0.20.2
-freetype_version=2.13.2
-sqlite3_version=3.44.2
-luajit_version=20240125
+freetype_version=2.12.1
+sqlite3_version=3.41.2
+luajit_version=20230221
 leveldb_version=1.23
-zlib_version=1.3.1
+zlib_version=1.2.13
 zstd_version=1.5.5
-libjpeg_version=3.0.1
-libpng_version=1.6.40
-sdl2_version=2.28.5
 
 download () {
 	local url=$1
@@ -26,7 +23,6 @@ download () {
 
 	[ -d "./$foldername" ] && return 0
 	wget "$url" -c -O "./$filename"
-	sha256sum -w -c <(grep -F "$filename" "$topdir/sha256sums.txt")
 	if [ "$extract" = "unzip" ]; then
 		unzip -o "$filename" -d "$foldername"
 	elif [ "$extract" = "unzip_nofolder" ]; then
@@ -51,11 +47,11 @@ get_sources () {
 # sets $runtime_dlls
 find_runtime_dlls () {
 	local triple=$1
-	# Try to find runtime DLLs in various paths
+	# Try to find runtime DLLs in various paths (varies by distribution, sigh)
 	local tmp=$(dirname "$(command -v $compiler)")/..
 	runtime_dlls=
-	for name in lib{clang_rt,c++,unwind,winpthread-}'*'.dll; do
-		for dir in $tmp/$triple/{bin,lib}; do
+	for name in lib{gcc_,stdc++-,winpthread-}'*'.dll; do
+		for dir in $tmp/$triple/{bin,lib} $tmp/lib/gcc/$triple/*; do
 			[ -d "$dir" ] || continue
 			local file=$(echo $dir/$name)
 			[ -f "$file" ] && { runtime_dlls+="$file;"; break; }
@@ -68,28 +64,14 @@ find_runtime_dlls () {
 	fi
 }
 
-_dlls () {
-	for f in "$@"; do
-		if [ ! -e "$f" ]; then
-			echo "Could not find $f" >&2
-		elif [[ -f "$f" && "$f" == *.dll ]]; then
-			printf '%s;' "$f"
-		fi
-	done
-}
-
 add_cmake_libs () {
+	local irr_dlls=$(echo $libdir/irrlicht/lib/*.dll | tr ' ' ';')
+	local vorbis_dlls=$(echo $libdir/libvorbis/bin/libvorbis{,file}-*.dll | tr ' ' ';')
+	local gettext_dlls=$(echo $libdir/gettext/bin/lib{intl,iconv}-*.dll | tr ' ' ';')
+
 	cmake_args+=(
-		-DPNG_LIBRARY=$libdir/libpng/lib/libpng.dll.a
-		-DPNG_PNG_INCLUDE_DIR=$libdir/libpng/include
-		-DPNG_DLL="$(_dlls $libdir/libpng/bin/*)"
-
-		-DJPEG_LIBRARY=$libdir/libjpeg/lib/libjpeg.dll.a
-		-DJPEG_INCLUDE_DIR=$libdir/libjpeg/include
-		-DJPEG_DLL="$(_dlls $libdir/libjpeg/bin/libjpeg*)"
-
-		-DCMAKE_PREFIX_PATH=$libdir/sdl2/lib/cmake
-		-DSDL2_DLL="$(_dlls $libdir/sdl2/bin/*)"
+		-DCMAKE_PREFIX_PATH=$libdir/irrlicht
+		-DIRRLICHT_DLL="$irr_dlls"
 
 		-DZLIB_INCLUDE_DIR=$libdir/zlib/include
 		-DZLIB_LIBRARY=$libdir/zlib/lib/libz.dll.a
@@ -104,37 +86,37 @@ add_cmake_libs () {
 
 		-DOGG_INCLUDE_DIR=$libdir/libogg/include
 		-DOGG_LIBRARY=$libdir/libogg/lib/libogg.dll.a
-		-DOGG_DLL="$(_dlls $libdir/libogg/bin/*)"
+		-DOGG_DLL=$libdir/libogg/bin/libogg-0.dll
 
 		-DVORBIS_INCLUDE_DIR=$libdir/libvorbis/include
 		-DVORBIS_LIBRARY=$libdir/libvorbis/lib/libvorbis.dll.a
-		-DVORBIS_DLL="$(_dlls $libdir/libvorbis/bin/libvorbis{,file}[-.]*)"
+		-DVORBIS_DLL="$vorbis_dlls"
 		-DVORBISFILE_LIBRARY=$libdir/libvorbis/lib/libvorbisfile.dll.a
 
 		-DOPENAL_INCLUDE_DIR=$libdir/openal/include/AL
 		-DOPENAL_LIBRARY=$libdir/openal/lib/libOpenAL32.dll.a
 		-DOPENAL_DLL=$libdir/openal/bin/OpenAL32.dll
 
-		-DCURL_DLL="$(_dlls $libdir/curl/bin/libcurl*)"
+		-DCURL_DLL=$libdir/curl/bin/libcurl-4.dll
 		-DCURL_INCLUDE_DIR=$libdir/curl/include
 		-DCURL_LIBRARY=$libdir/curl/lib/libcurl.dll.a
 
 		-DGETTEXT_MSGFMT=`command -v msgfmt`
-		-DGETTEXT_DLL="$(_dlls $libdir/gettext/bin/lib{intl,iconv}*)"
+		-DGETTEXT_DLL="$gettext_dlls"
 		-DGETTEXT_INCLUDE_DIR=$libdir/gettext/include
 		-DGETTEXT_LIBRARY=$libdir/gettext/lib/libintl.dll.a
 
 		-DFREETYPE_INCLUDE_DIR_freetype2=$libdir/freetype/include/freetype2
 		-DFREETYPE_INCLUDE_DIR_ft2build=$libdir/freetype/include/freetype2
 		-DFREETYPE_LIBRARY=$libdir/freetype/lib/libfreetype.dll.a
-		-DFREETYPE_DLL="$(_dlls $libdir/freetype/bin/libfreetype*)"
+		-DFREETYPE_DLL=$libdir/freetype/bin/libfreetype-6.dll
 
 		-DSQLITE3_INCLUDE_DIR=$libdir/sqlite3/include
 		-DSQLITE3_LIBRARY=$libdir/sqlite3/lib/libsqlite3.dll.a
-		-DSQLITE3_DLL="$(_dlls $libdir/sqlite3/bin/libsqlite*)"
+		-DSQLITE3_DLL=$libdir/sqlite3/bin/libsqlite3-0.dll
 
-		-DLEVELDB_INCLUDE_DIR=$libdir/libleveldb/include
-		-DLEVELDB_LIBRARY=$libdir/libleveldb/lib/libleveldb.dll.a
-		-DLEVELDB_DLL=$libdir/libleveldb/bin/libleveldb.dll
+		-DLEVELDB_INCLUDE_DIR=$libdir/leveldb/include
+		-DLEVELDB_LIBRARY=$libdir/leveldb/lib/libleveldb.dll.a
+		-DLEVELDB_DLL=$libdir/leveldb/bin/libleveldb.dll
 	)
 }

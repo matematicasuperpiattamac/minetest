@@ -45,7 +45,7 @@ public:
 
 	bool OnEvent(const SEvent &event);
 #ifdef __ANDROID__
-	void getAndroidUIInput();
+	bool getAndroidUIInput();
 #endif
 
 protected:

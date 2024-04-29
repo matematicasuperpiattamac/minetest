@@ -31,7 +31,6 @@ std::string QuicktuneValue::getString()
 	}
 	return "<invalid type>";
 }
-
 void QuicktuneValue::relativeAdd(float amount)
 {
 	switch(type){
@@ -49,16 +48,24 @@ void QuicktuneValue::relativeAdd(float amount)
 
 static std::map<std::string, QuicktuneValue> g_values;
 static std::vector<std::string> g_names;
-static std::mutex g_mutex;
+std::mutex *g_mutex = NULL;
 
-const std::vector<std::string> &getQuicktuneNames()
+static void makeMutex()
+{
+	if(!g_mutex){
+		g_mutex = new std::mutex();
+	}
+}
+
+std::vector<std::string> getQuicktuneNames()
 {
 	return g_names;
 }
 
 QuicktuneValue getQuicktuneValue(const std::string &name)
 {
-	MutexAutoLock lock(g_mutex);
+	makeMutex();
+	MutexAutoLock lock(*g_mutex);
 	std::map<std::string, QuicktuneValue>::iterator i = g_values.find(name);
 	if(i == g_values.end()){
 		QuicktuneValue val;
@@ -70,15 +77,17 @@ QuicktuneValue getQuicktuneValue(const std::string &name)
 
 void setQuicktuneValue(const std::string &name, const QuicktuneValue &val)
 {
-	MutexAutoLock lock(g_mutex);
+	makeMutex();
+	MutexAutoLock lock(*g_mutex);
 	g_values[name] = val;
 	g_values[name].modified = true;
 }
 
 void updateQuicktuneValue(const std::string &name, QuicktuneValue &val)
 {
-	MutexAutoLock lock(g_mutex);
-	auto i = g_values.find(name);
+	makeMutex();
+	MutexAutoLock lock(*g_mutex);
+	std::map<std::string, QuicktuneValue>::iterator i = g_values.find(name);
 	if(i == g_values.end()){
 		g_values[name] = val;
 		g_names.push_back(name);

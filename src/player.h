@@ -26,8 +26,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/basic_macros.h"
 #include <list>
 #include <mutex>
-#include <functional>
-#include <tuple>
 
 #define PLAYERNAME_SIZE 20
 
@@ -43,17 +41,7 @@ struct PlayerFovSpec
 
 	// The time to be take to trasition to the new FOV value.
 	// Transition is instantaneous if omitted. Omitted by default.
-	f32 transition_time = 0;
-
-	inline bool operator==(const PlayerFovSpec &other) const {
-		// transition_time is compared here since that could be relevant
-		// when aborting a running transition.
-		return fov == other.fov && is_multiplier == other.is_multiplier &&
-			transition_time == other.transition_time;
-	}
-	inline bool operator!=(const PlayerFovSpec &other) const {
-		return !(*this == other);
-	}
+	f32 transition_time;
 };
 
 struct PlayerControl
@@ -126,24 +114,24 @@ struct PlayerPhysicsOverride
 	float liquid_sink = 1.f;
 	float acceleration_default = 1.f;
 	float acceleration_air = 1.f;
+};
 
-private:
-	auto tie() const {
-		// Make sure to add new members to this list!
-		return std::tie(
-		speed, jump, gravity, sneak, sneak_glitch, new_move, speed_climb, speed_crouch,
-		liquid_fluidity, liquid_fluidity_smooth, liquid_sink, acceleration_default,
-		acceleration_air
-		);
-	}
+struct PlayerSettings
+{
+	bool free_move = false;
+	bool pitch_move = false;
+	bool fast_move = false;
+	bool continuous_forward = false;
+	bool always_fly_fast = false;
+	bool aux1_descends = false;
+	bool noclip = false;
+	bool autojump = false;
 
-public:
-	bool operator==(const PlayerPhysicsOverride &other) const {
-		return tie() == other.tie();
+	const std::string setting_names[8] = {
+		"free_move", "pitch_move", "fast_move", "continuous_forward", "always_fly_fast",
+		"aux1_descends", "noclip", "autojump"
 	};
-	bool operator!=(const PlayerPhysicsOverride &other) const {
-		return tie() != other.tie();
-	};
+	void readGlobalSettings();
 };
 
 class Map;
@@ -155,7 +143,7 @@ class Player
 {
 public:
 
-	Player(const char *name, IItemDefManager *idef);
+	Player(const char *name, const char *token, IItemDefManager *idef);
 	virtual ~Player() = 0;
 
 	DISABLE_CLASS_COPY(Player);
@@ -167,15 +155,24 @@ public:
 	{}
 
 	// in BS-space
-	inline void setSpeed(v3f speed)
+	v3f getSpeed() const
+	{
+		return m_speed;
+	}
+
+	// in BS-space
+	void setSpeed(v3f speed)
 	{
 		m_speed = speed;
 	}
 
-	// in BS-space
-	v3f getSpeed() const { return m_speed; }
-
 	const char *getName() const { return m_name; }
+
+	const char *getToken() const { return m_token; }
+
+	void setToken(const char* token) {
+      	*m_token = *token;
+    }
 
 	u32 getFreeHudID()
 	{
@@ -214,20 +211,18 @@ public:
 
 	PlayerControl control;
 	const PlayerControl& getPlayerControl() { return control; }
-
 	PlayerPhysicsOverride physics_override;
+	PlayerSettings &getPlayerSettings() { return m_player_settings; }
+	static void settingsChangedCallback(const std::string &name, void *data);
 
 	// Returns non-empty `selected` ItemStack. `hand` is a fallback, if specified
 	ItemStack &getWieldedItem(ItemStack *selected, ItemStack *hand) const;
 	void setWieldIndex(u16 index);
 	u16 getWieldIndex() const { return m_wield_index; }
 
-	bool setFov(const PlayerFovSpec &spec)
+	void setFov(const PlayerFovSpec &spec)
 	{
-		if (m_fov_override_spec == spec)
-			return false;
 		m_fov_override_spec = spec;
-		return true;
 	}
 
 	const PlayerFovSpec &getFov() const
@@ -236,7 +231,6 @@ public:
 	}
 
 	HudElement* getHud(u32 id);
-	void        hudApply(std::function<void(const std::vector<HudElement*>&)> f);
 	u32         addHud(HudElement* hud);
 	HudElement* removeHud(u32 id);
 	void        clearHud();
@@ -246,16 +240,16 @@ public:
 
 protected:
 	char m_name[PLAYERNAME_SIZE];
+	char m_token[255];
 	v3f m_speed; // velocity; in BS-space
 	u16 m_wield_index = 0;
 	PlayerFovSpec m_fov_override_spec = { 0.0f, false, 0.0f };
 
 	std::vector<HudElement *> hud;
-
 private:
 	// Protect some critical areas
 	// hud for example can be modified by EmergeThread
 	// and ServerThread
-	// FIXME: ^ this sounds like nonsense. should be checked.
 	std::mutex m_mutex;
+	PlayerSettings m_player_settings;
 };

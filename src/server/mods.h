@@ -22,10 +22,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "content/mod_configuration.h"
 #include <memory>
 
+class MetricsBackend;
+class MetricCounter;
 class ServerScripting;
 
 /**
- * Manages server mods
+ * Manage server mods
  *
  * All new calls to this class must be tested in test_servermodmanager.cpp
  */
@@ -34,20 +36,12 @@ class ServerModManager
 	ModConfiguration configuration;
 
 public:
-
 	/**
 	 * Creates a ServerModManager which targets worldpath
 	 * @param worldpath
 	 */
 	ServerModManager(const std::string &worldpath);
-
-	/**
-	 * Creates an empty ServerModManager. For testing purposes.
-	 * Note: definition looks like this so it isn't accidentally used.
-	*/
-	explicit ServerModManager(std::nullptr_t) {};
-
-	void loadMods(ServerScripting &script);
+	void loadMods(ServerScripting *script);
 	const ModSpec *getModSpec(const std::string &modname) const;
 	void getModNames(std::vector<std::string> &modlist) const;
 

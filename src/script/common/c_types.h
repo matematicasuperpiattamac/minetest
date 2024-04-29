@@ -59,4 +59,3 @@ public:
 
 
 extern EnumString es_ItemType[];
-extern EnumString es_TouchInteractionMode[];

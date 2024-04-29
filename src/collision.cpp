@@ -89,7 +89,7 @@ static inline v3f truncate(const v3f& vec, const f32 factor)
 // The time after which the collision occurs is stored in dtime.
 CollisionAxis axisAlignedCollision(
 		const aabb3f &staticbox, const aabb3f &movingbox,
-		const v3f speed, f32 *dtime)
+		const v3f &speed, f32 *dtime)
 {
 	//TimeTaker tt("axisAlignedCollision");
 
@@ -234,20 +234,20 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 	Map *map = &env->getMap();
 	ServerEnvironment *s_env = dynamic_cast<ServerEnvironment*>(env);
 
-	ScopeProfiler sp(g_profiler, PROFILER_NAME("collisionMoveSimple()"), SPT_AVG, PRECISION_MICRO);
+	ScopeProfiler sp(g_profiler, PROFILER_NAME("collisionMoveSimple()"), SPT_AVG);
 
 	collisionMoveResult result;
 
 	/*
 		Calculate new velocity
 	*/
-	if (dtime > DTIME_LIMIT) {
+	if (dtime > 0.5f) {
 		if (!time_notification_done) {
 			time_notification_done = true;
-			warningstream << "collisionMoveSimple: maximum step interval exceeded,"
+			infostream << "collisionMoveSimple: maximum step interval exceeded,"
 					" lost movement details!"<<std::endl;
 		}
-		dtime = DTIME_LIMIT;
+		dtime = 0.5f;
 	} else {
 		time_notification_done = false;
 	}
@@ -273,7 +273,7 @@ collisionMoveResult collisionMoveSimple(Environment *env, IGameDef *gamedef,
 	std::vector<NearbyCollisionInfo> cinfo;
 	{
 	//TimeTaker tt2("collisionMoveSimple collect boxes");
-	ScopeProfiler sp2(g_profiler, PROFILER_NAME("collision collect boxes"), SPT_AVG, PRECISION_MICRO);
+	ScopeProfiler sp2(g_profiler, PROFILER_NAME("collision collect boxes"), SPT_AVG);
 
 	v3f minpos_f(
 		MYMIN(pos_f->X, newpos_f.X),
