@@ -24,7 +24,9 @@ Download Minetest's fork of Irrlicht:
 
 ```
 git clone https://github.com/minetest/irrlicht.git lib/irrlichtmt
-git --work-tree=lib/irrlichtmt checkout 1.9.0mt13
+cd lib/irrlichtmt
+git checkout 1.9.0mt13
+cd ../..
 ```
 
 ## Build
