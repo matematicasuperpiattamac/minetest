@@ -16,14 +16,15 @@ brew install cmake freetype gettext gmp hiredis jpeg jsoncpp leveldb libogg libp
 Download source (this is the URL to the latest of source repository, which might not work at all times) using Git:
 
 ```bash
-git clone --depth 1 https://github.com/minetest/minetest.git
-cd minetest
+git clone https://github.com/matematicasuperpiattamac/minetest.git ms_client_mac
+cd ms_client_mac
 ```
 
 Download Minetest's fork of Irrlicht:
 
 ```
-git clone --depth 1 https://github.com/minetest/irrlicht.git lib/irrlichtmt
+git clone https://github.com/minetest/irrlicht.git lib/irrlichtmt
+git --work-tree=lib/irrlichtmt checkout 1.9.0mt13
 ```
 
 ## Build
@@ -40,6 +41,8 @@ cmake .. \
 
 make -j$(sysctl -n hw.logicalcpu)
 make install
+
+codesign --force --deep -s - macos/minetest.app
 ```
 
 ## Run
