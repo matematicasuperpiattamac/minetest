@@ -898,7 +898,7 @@ if(BUILD_CLIENT AND NOT ANDROID)
 		endforeach()
 	endif()
 
-	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../fonts" DESTINATION "${SHAREDIR}"
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../fonts" DESTINATION "${SHAREDIR}/.."
 			FILES_MATCHING PATTERN "*.ttf" PATTERN "*.txt")
 endif()
 
