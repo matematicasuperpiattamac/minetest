@@ -178,7 +178,7 @@ elseif(APPLE)
 	set(SHAREDIR ${BUNDLE_NAME}/Contents/Resources)
 	set(DOCDIR "${SHAREDIR}/${PROJECT_NAME}")
 	set(EXAMPLE_CONF_DIR ${DOCDIR})
-	set(LOCALEDIR "${SHAREDIR}/locale")
+	set(LOCALEDIR "${SHAREDIR}/../locale")
 elseif(UNIX) # Linux, BSD etc
 	if(RUN_IN_PLACE)
 		set(SHAREDIR ".")
