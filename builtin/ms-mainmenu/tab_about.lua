@@ -117,7 +117,7 @@ return {
 		local fs = "formspec_version[6]" ..
 		    "image[0.75,0.5;2.2,2.2;" .. core.formspec_escape(logofile) .. "]" ..
 			"style[label_button;border=false]" ..
-			"button[0.5,2;2.5,2;label_button;" .. version.project .. " " .. version.string .. "]" ..
+			"button[0,2;3.5,2;label_button;" .. version.project .. " " .. version.string .. "]" ..
 			"button[0,4;3.5,1;homepage;minetest.net]" ..
 
 			"tooltip[ms_site;" .. fgettext("Visita il sito") .. "]" ..
@@ -141,7 +141,7 @@ return {
 		-- Render information
 		fs = fs .. "label[0.75,4.9;" ..
 			fgettext("Active renderer:") .. "\n" ..
-			core.formspec_escape(core.get_screen_info().render_info) .. "]"
+			core.formspec_escape(core.get_active_renderer()) .. "]"
 
 		return fs
 	end,
