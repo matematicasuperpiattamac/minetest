@@ -1,4 +1,11 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.5)
+
+# Set policies up to 3.9 since we want to enable the IPO option
+if(${CMAKE_VERSION} VERSION_LESS 3.9)
+	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+else()
+	cmake_policy(VERSION 3.9)
+endif()
 
 # This can be read from ${PROJECT_NAME} after project() is called
 project(minetest)
@@ -37,25 +44,6 @@ set(BUILD_UNITTESTS TRUE CACHE BOOL "Build unittests")
 set(BUILD_BENCHMARKS FALSE CACHE BOOL "Build benchmarks")
 set(BUILD_DOCUMENTATION TRUE CACHE BOOL "Build documentation")
 
-set(DEFAULT_ENABLE_LTO TRUE)
-# by default don't enable on Debug builds to get faster builds
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(DEFAULT_ENABLE_LTO FALSE)
-endif()
-#### LTO testing list ####
-# - Linux: seems to work always
-# - win32/msvc: works
-# - win32/gcc: fails to link
-# - win32/clang: works
-# - macOS on x86: seems to be fine
-# - macOS on ARM: crashes, see <https://github.com/minetest/minetest/issues/14397>
-# Note: since CMake has no easy architecture detection disabling for Mac entirely
-#### ####
-if((WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR APPLE)
-	set(DEFAULT_ENABLE_LTO FALSE)
-endif()
-set(ENABLE_LTO ${DEFAULT_ENABLE_LTO} CACHE BOOL "Use Link Time Optimization")
-
 set(DEFAULT_RUN_IN_PLACE FALSE)
 if(WIN32)
 	set(DEFAULT_RUN_IN_PLACE TRUE)
@@ -91,10 +79,28 @@ if(ANDROID)
 endif()
 
 
-if(TRUE)
-	message(STATUS "Using imported IrrlichtMt at subdirectory 'irr'")
+set(IRRLICHTMT_BUILD_DIR "" CACHE PATH "Path to IrrlichtMt build directory.")
+if(ANDROID)
+	# currently manually provided
+elseif(NOT "${IRRLICHTMT_BUILD_DIR}" STREQUAL "")
+	find_package(IrrlichtMt QUIET
+		PATHS "${IRRLICHTMT_BUILD_DIR}"
+		NO_DEFAULT_PATH
+	)
+
+	if(NOT TARGET IrrlichtMt::IrrlichtMt)
+		# find_package() searches certain subdirectories. ${PATH}/cmake is not
+		# the only one, but it is the one where IrrlichtMt is supposed to export
+		# IrrlichtMtConfig.cmake
+		message(FATAL_ERROR "Could not find IrrlichtMtConfig.cmake in ${IRRLICHTMT_BUILD_DIR}/cmake.")
+	endif()
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/irrlichtmt")
+	message(STATUS "Using user-provided IrrlichtMt at subdirectory 'lib/irrlichtmt'")
 	if(BUILD_CLIENT)
-		add_subdirectory(irr EXCLUDE_FROM_ALL)
+		# tell IrrlichtMt to create a static library
+		set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library" FORCE)
+		add_subdirectory(lib/irrlichtmt EXCLUDE_FROM_ALL)
+		unset(BUILD_SHARED_LIBS CACHE)
 
 		if(NOT TARGET IrrlichtMt)
 			message(FATAL_ERROR "IrrlichtMt project is missing a CMake target?!")
@@ -102,22 +108,47 @@ if(TRUE)
 	else()
 		add_library(IrrlichtMt::IrrlichtMt INTERFACE IMPORTED)
 		set_target_properties(IrrlichtMt::IrrlichtMt PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/irr/include")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/lib/irrlichtmt/include")
+	endif()
+else()
+	find_package(IrrlichtMt QUIET)
+	if(NOT TARGET IrrlichtMt::IrrlichtMt)
+		string(CONCAT explanation_msg
+			"The Minetest team has forked Irrlicht to make their own customizations. "
+			"It can be found here: https://github.com/minetest/irrlicht\n"
+			"For example use: git clone --depth=1 https://github.com/minetest/irrlicht lib/irrlichtmt\n")
+		if(BUILD_CLIENT)
+			message(FATAL_ERROR "IrrlichtMt is required to build the client, but it was not found.\n${explanation_msg}")
+		endif()
+
+		include(MinetestFindIrrlichtHeaders)
+		if(NOT IRRLICHT_INCLUDE_DIR)
+			message(FATAL_ERROR "IrrlichtMt headers are required to build the server, but none found.\n${explanation_msg}")
+		endif()
+		message(STATUS "Found IrrlichtMt headers: ${IRRLICHT_INCLUDE_DIR}")
+		add_library(IrrlichtMt::IrrlichtMt INTERFACE IMPORTED)
+		# Note that we can't use target_include_directories() since that doesn't work for IMPORTED targets before CMake 3.11
+		set_target_properties(IrrlichtMt::IrrlichtMt PROPERTIES
+			INTERFACE_INCLUDE_DIRECTORIES "${IRRLICHT_INCLUDE_DIR}")
 	endif()
 endif()
 
-if (ENABLE_LTO OR CMAKE_INTERPROCEDURAL_OPTIMIZATION)
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
-	if(lto_supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-		message(STATUS "LTO/IPO is enabled")
-	else()
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
-		message(STATUS "LTO/IPO was requested but is not supported by the compiler: ${lto_output}")
+if(ANDROID)
+	# skipped for now
+elseif(BUILD_CLIENT AND TARGET IrrlichtMt::IrrlichtMt)
+	# retrieve version somehow
+	if(NOT IrrlichtMt_VERSION)
+		get_target_property(IrrlichtMt_VERSION IrrlichtMt VERSION)
 	endif()
-else()
-	message(STATUS "LTO/IPO is not enabled")
+	message(STATUS "Found IrrlichtMt ${IrrlichtMt_VERSION}")
+
+	set(TARGET_VER_S 1.9.0mt13)
+	string(REPLACE "mt" "." TARGET_VER ${TARGET_VER_S})
+	if(IrrlichtMt_VERSION VERSION_LESS ${TARGET_VER})
+		message(FATAL_ERROR "At least IrrlichtMt ${TARGET_VER_S} is required to build")
+	elseif(NOT DEVELOPMENT_BUILD AND IrrlichtMt_VERSION VERSION_GREATER ${TARGET_VER})
+		message(FATAL_ERROR "IrrlichtMt ${TARGET_VER_S} is required to build")
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -225,7 +256,9 @@ if(NOT CUSTOM_LOCALEDIR STREQUAL "")
 endif()
 
 
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/games" DESTINATION "${SHAREDIR}")
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/builtin" DESTINATION "${SHAREDIR}")
+
 if(RUN_IN_PLACE)
 	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/mods/mods_here.txt" DESTINATION "${SHAREDIR}/mods")
 	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/textures/texture_packs_here.txt" DESTINATION "${SHAREDIR}/textures")
@@ -254,6 +287,7 @@ install(FILES "doc/menu_lua_api.md" DESTINATION "${DOCDIR}" COMPONENT "Docs")
 install(FILES "doc/texture_packs.md" DESTINATION "${DOCDIR}" COMPONENT "Docs")
 install(FILES "doc/world_format.md" DESTINATION "${DOCDIR}" COMPONENT "Docs")
 install(FILES "minetest.conf.example" DESTINATION "${EXAMPLE_CONF_DIR}")
+install(FILES "minetest.conf" DESTINATION "${SHAREDIR}/..")
 
 if(UNIX AND NOT APPLE)
 	install(FILES "doc/minetest.6" "doc/minetestserver.6" DESTINATION "${MANDIR}/man6")
@@ -277,9 +311,8 @@ find_package(Lua REQUIRED)
 if(NOT USE_LUAJIT)
 	add_subdirectory(lib/bitop)
 endif()
-add_subdirectory(lib/sha256)
 
-if(BUILD_UNITTESTS OR BUILD_BENCHMARKS)
+if(BUILD_BENCHMARKS)
 	add_subdirectory(lib/catch2)
 endif()
 
