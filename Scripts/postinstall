@@ -1,0 +1,26 @@
+#!/bin/bash
+echo "Matematica superpiatta postinstall script"
+
+# directories
+fromdir="$2/Contents/Resources"
+todir=~/"Library/Application Support/minetest"
+
+# debug
+echo FROM: $fromdir
+echo TO: $todir
+
+# create directory
+echo MKDIR
+mkdir -p "$todir"
+
+# copy conf
+echo COPY
+cp "${fromdir}/minetest.conf" "${todir}/minetest.conf"
+
+# set owner
+echo CHOWN
+chown -R $USER "$todir"
+
+# done
+echo OK
+exit 0
