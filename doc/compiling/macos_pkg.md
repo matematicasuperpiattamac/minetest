@@ -74,10 +74,10 @@ codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" 
 codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libgmp.10.dylib
 
 # sign binary
-codesign --force --verify --verbose -options runtime --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
+codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
 
 # sign app
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app
+codesign --force --verify --verbose --options runtime --sign "Developer ID Application: ${iddev}" minetest.app
 
 # verify
 codesign -vvv -d minetest.app
