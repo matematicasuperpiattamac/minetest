@@ -9,11 +9,11 @@
 	<key>CFBundleIconFile</key>
 	<string>minetest-icon.icns</string>
 	<key>CFBundleName</key>
-	<string>Minetest</string>
+	<string>Matematica Superpiatta</string>
 	<key>CFBundleDisplayName</key>
-	<string>Minetest</string>
+	<string>Matematica Superpiatta</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.minetest.minetest</string>
+	<string>com.stemblocks.matematicasuperpiatta</string>
 	<key>NSHighResolutionCapable</key>
 	<false/>
 </dict>
