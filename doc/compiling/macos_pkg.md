@@ -73,18 +73,14 @@ codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" 
 codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libtcmalloc.4.dylib
 codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libgmp.10.dylib
 
-# sign links
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjpeg.8.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libleveldb.1.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libogg.0.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libluajit-5.1.2.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libsnappy.1.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libzstd.1.dylib
-
 # sign binary
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
+codesign --force --verify --verbose -options runtime --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
 
 # sign app
+codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app
+
+# verify
+codesign -vvv -d minetest.app
 ```
 
 ## Create Package
@@ -103,3 +99,25 @@ pkgbuild --root "minetest.app" \
          MatematicaSuperpiatta1.1.4.pkg
          
 ```
+
+## Notarize
+
+```bash
+# just one time to create the keychain profile
+xcrun notarytool store-credentials --apple-id "<APPLE_DEV_EMAIL>" --team_id "<TEAM_ID>"
+
+# actual submission
+xcrun notarytool submit MatematicaSuperpiatta1.1.4.pkg --keychain-profile "<AppPwdKeychainID>" --wait
+
+# if invalid check log
+xcrun notarytool log "<SUBMISSION_ID>" --keychain-profile "<AppPwdKeychainID>" "<path/to/save/log.txt>"
+```
+
+## Stapler
+
+```bash
+# it's not possible with Mach-O Binaries
+# https://dennisbabkin.com/blog/?t=how-to-get-certificate-code-sign-notarize-macos-binaries-outside-apple-app-store#staple_mach_o
+xcrun stapler staple MatematicaSuperpiatta1.1.4.pkg
+```
+
