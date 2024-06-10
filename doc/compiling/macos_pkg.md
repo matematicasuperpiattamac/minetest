@@ -57,27 +57,27 @@ cd macos
 iddev="<NAME> (<ID>)"
 
 # sign libs
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbisfile.3.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libogg.0.8.5.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libsnappy.1.2.1.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libintl.8.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbis.0.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libleveldb.1.23.0.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libpng16.16.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libfreetype.6.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libluajit-5.1.2.1.1716656478.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libzstd.1.5.6.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjpeg.8.3.2.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjsoncpp.25.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libhiredis.1.1.0.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libtcmalloc.4.dylib
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libgmp.10.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbisfile.3.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libogg.0.8.5.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libsnappy.1.2.1.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libintl.8.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbis.0.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libleveldb.1.23.0.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libpng16.16.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libfreetype.6.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libluajit-5.1.2.1.1716656478.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libzstd.1.5.6.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjpeg.8.3.2.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjsoncpp.25.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libhiredis.1.1.0.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libtcmalloc.4.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libgmp.10.dylib
 
 # sign binary
-codesign --force --verify --verbose --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
 
 # sign app
-codesign --force --verify --verbose --options runtime --sign "Developer ID Application: ${iddev}" minetest.app
+codesign --force --verify --verbose --timestamp --options runtime --sign "Developer ID Application: ${iddev}" minetest.app
 
 # verify
 codesign -vvv -d minetest.app
@@ -95,9 +95,11 @@ pkgbuild --root "minetest.app" \
          --version "1.1.4" \
          --scripts Scripts \
          --install-location "Applications/Matematica Superpiatta.app" \
-         --sign "Developer ID Installer: <NAME> (<ID>)" \
+         --sign "Developer ID Installer: ${iddev}" \
          MatematicaSuperpiatta1.1.4.pkg
-         
+
+# verify pkg
+pkgutil --check-signature MatematicaSuperpiatta1.1.4.pkg
 ```
 
 ## Notarize
