@@ -73,6 +73,13 @@ codesign --force --verify --verbose --timestamp --sign "Developer ID Application
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libtcmalloc.4.dylib
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libgmp.10.dylib
 
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libsnappy.1.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libogg.0.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libleveldb.1.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libluajit-5.1.2.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjpeg.8.dylib
+codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libzstd.1.dylib
+
 # sign binary
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
 
