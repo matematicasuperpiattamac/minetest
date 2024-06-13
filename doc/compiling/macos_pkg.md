@@ -101,7 +101,7 @@ pkgbuild --root "minetest.app" \
          --identifier "com.stemblocks.matematicasuperpiatta" \
          --version "1.1.4" \
          --scripts Scripts \
-         --install-location "Applications/Matematica Superpiatta.app" \
+         --install-location "Applications/MatematicaSuperpiatta.app" \
          --sign "Developer ID Installer: ${iddev}" \
          MatematicaSuperpiatta1.1.4.pkg
 
@@ -128,5 +128,15 @@ xcrun notarytool log "<SUBMISSION_ID>" --keychain-profile "<AppPwdKeychainID>" "
 # it's not possible with Mach-O Binaries
 # https://dennisbabkin.com/blog/?t=how-to-get-certificate-code-sign-notarize-macos-binaries-outside-apple-app-store#staple_mach_o
 xcrun stapler staple MatematicaSuperpiatta1.1.4.pkg
+```
+
+## Verify
+
+```bash
+# notarization package
+spctl -a -vv -t install MatematicaSuperpiatta1.1.4.pkg
+
+# notarization installed app
+spctl -a -vv /Applications/MatematicaSuperpiatta.app
 ```
 
