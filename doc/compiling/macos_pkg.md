@@ -51,10 +51,12 @@ make install
 ## Sign
 
 ```bash
-cd macos
-
 # to edit
 iddev="<NAME> (<ID>)"
+
+# copy entitlements
+cd macos
+cp ../../misc/Entitlements.plist Entitlements.plist
 
 # sign libs
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbisfile.3.dylib
@@ -80,14 +82,14 @@ codesign --force --verify --verbose --timestamp --sign "Developer ID Application
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libjpeg.8.dylib
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libzstd.1.dylib
 
-# sign binary
-codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/MacOS/minetest
-
 # sign app
-codesign --force --verify --verbose --timestamp --options runtime --sign "Developer ID Application: ${iddev}" minetest.app
+codesign --force --verify --verbose --timestamp --options runtime --entitlements Entitlements.plist --sign "Developer ID Application: ${iddev}" minetest.app
 
 # verify
 codesign -vvv -d minetest.app
+
+# verify entitlements
+codesign -d entitlements - --xml minetest.app
 ```
 
 ## Create Package
