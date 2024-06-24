@@ -58,7 +58,7 @@ iddev="<NAME> (<ID>)"
 cd macos
 cp ../../misc/Entitlements.plist Entitlements.plist
 
-# sign libs
+# sign libs (MAKE SURE THERE ARE NO SYMBOLIC LINKS)
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libvorbisfile.3.dylib
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libogg.0.8.5.dylib
 codesign --force --verify --verbose --timestamp --sign "Developer ID Application: ${iddev}" minetest.app/Contents/Frameworks/libsnappy.1.2.1.dylib
