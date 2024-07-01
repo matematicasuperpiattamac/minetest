@@ -86,10 +86,7 @@ codesign --force --verify --verbose --timestamp --sign "Developer ID Application
 codesign --force --verify --verbose --timestamp --options runtime --entitlements Entitlements.plist --sign "Developer ID Application: ${iddev}" minetest.app
 
 # verify
-codesign -vvv -d minetest.app
-
-# verify entitlements
-codesign -d entitlements - --xml minetest.app
+codesign -dvvv --entitlements - minetest.app
 ```
 
 ## Create Package
