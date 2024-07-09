@@ -101,7 +101,7 @@ pkgbuild --root "minetest.app" \
          --identifier "com.stemblocks.matematicasuperpiatta" \
          --version "1.1.4" \
          --scripts Scripts \
-         --install-location "Applications/MatematicaSuperpiatta.app" \
+         --install-location "Applications/Matematica Superpiatta.app" \
          --sign "Developer ID Installer: ${iddev}" \
          MatematicaSuperpiatta1.1.4.pkg
 
