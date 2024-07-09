@@ -134,8 +134,7 @@ xcrun notarytool log "<SUBMISSION_ID>" --keychain-profile "<AppPwdKeychainID>" "
 ## Stapler
 
 ```bash
-# it's not possible with Mach-O Binaries
-# https://dennisbabkin.com/blog/?t=how-to-get-certificate-code-sign-notarize-macos-binaries-outside-apple-app-store#staple_mach_o
+# staple for offline check
 xcrun stapler staple MatematicaSuperpiatta.pkg
 ```
 
