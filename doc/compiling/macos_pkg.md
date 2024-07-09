@@ -96,6 +96,7 @@ mkdir Scripts
 cp ../../Scripts/postinstall Scripts/postinstall
 chmod +x Scripts/postinstall
 
+# pkgbuild
 pkgbuild --root "minetest.app" \
          --identifier "com.stemblocks.matematicasuperpiatta" \
          --version "1.1.4" \
@@ -106,6 +107,15 @@ pkgbuild --root "minetest.app" \
 
 # verify pkg
 pkgutil --check-signature MatematicaSuperpiatta1.1.4.pkg
+
+# productbuild
+cp ../../misc/Entitlements.plist Entitlements.plist
+
+# generate default distribution list
+productbuild --synthesize --product requirements.plist --package MatematicaSuperpiatta1.1.4.pkg distribution.plist
+
+# create final pkg
+productbuild --distribution distribution.plist --resources . --package-path MatematicaSuperpiatta1.1.4.pkg --sign "Developer ID Installer: ${iddev}" MatematicaSuperpiatta.pkg
 ```
 
 ## Notarize
@@ -115,7 +125,7 @@ pkgutil --check-signature MatematicaSuperpiatta1.1.4.pkg
 xcrun notarytool store-credentials --apple-id "<APPLE_DEV_EMAIL>" --team_id "<TEAM_ID>"
 
 # actual submission
-xcrun notarytool submit MatematicaSuperpiatta1.1.4.pkg --keychain-profile "<AppPwdKeychainID>" --wait
+xcrun notarytool submit MatematicaSuperpiatta.pkg --keychain-profile "<AppPwdKeychainID>" --wait
 
 # if invalid check log
 xcrun notarytool log "<SUBMISSION_ID>" --keychain-profile "<AppPwdKeychainID>" "<path/to/save/log.txt>"
@@ -126,14 +136,14 @@ xcrun notarytool log "<SUBMISSION_ID>" --keychain-profile "<AppPwdKeychainID>" "
 ```bash
 # it's not possible with Mach-O Binaries
 # https://dennisbabkin.com/blog/?t=how-to-get-certificate-code-sign-notarize-macos-binaries-outside-apple-app-store#staple_mach_o
-xcrun stapler staple MatematicaSuperpiatta1.1.4.pkg
+xcrun stapler staple MatematicaSuperpiatta.pkg
 ```
 
 ## Verify
 
 ```bash
 # notarization package
-spctl -a -vv -t install MatematicaSuperpiatta1.1.4.pkg
+spctl -a -vv -t install MatematicaSuperpiatta.pkg
 
 # notarization installed app
 spctl -a -vv /Applications/MatematicaSuperpiatta.app
