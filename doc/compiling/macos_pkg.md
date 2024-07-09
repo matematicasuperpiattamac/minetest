@@ -109,7 +109,7 @@ pkgbuild --root "minetest.app" \
 pkgutil --check-signature MatematicaSuperpiatta1.1.4.pkg
 
 # productbuild
-cp ../../misc/Entitlements.plist Entitlements.plist
+cp ../../misc/requirements.plist requirements.plist
 
 # generate default distribution list
 productbuild --synthesize --product requirements.plist --package MatematicaSuperpiatta1.1.4.pkg distribution.plist
