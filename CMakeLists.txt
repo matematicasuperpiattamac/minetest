@@ -322,12 +322,12 @@ add_subdirectory(src)
 
 # CPack
 
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A free open-source voxel game engine with easy modding and game creation.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Videogioco per insegnamento e apprendimento della matematica.")
 set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
-set(CPACK_PACKAGE_VENDOR "celeron55")
-set(CPACK_PACKAGE_CONTACT "Perttu Ahola <celeron55@gmail.com>")
+set(CPACK_PACKAGE_VENDOR "Stemblocks")
+set(CPACK_PACKAGE_CONTACT "info@matematicasuperpiatta.it")
 
 include(CPackComponent)
 
@@ -361,8 +361,9 @@ if(WIN32)
 		# Supported languages can be found at
 		# http://wixtoolset.org/documentation/manual/v3/wixui/wixui_localization.html
 		#set(CPACK_WIX_CULTURES "ar-SA,bg-BG,ca-ES,hr-HR,cs-CZ,da-DK,nl-NL,en-US,et-EE,fi-FI,fr-FR,de-DE")
-		set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/misc/CPACK_WIX_UI_BANNER.BMP")
-		set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/misc/CPACK_WIX_UI_DIALOG.BMP")
+		set(CPACK_WIX_CULTURES "it-IT,en-US")
+		set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/misc/CPACK_WIX_UI_BANNER_MS.png")
+		set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/misc/CPACK_WIX_UI_DIALOG_MS.png")
 
 		set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/doc/lgpl-2.1.txt")
 
