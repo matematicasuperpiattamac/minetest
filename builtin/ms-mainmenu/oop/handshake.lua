@@ -87,7 +87,7 @@ function Handshake:launchpad()
 				url = self.service_url,
 				extra_headers = { "Content-Type: application/json" },
 				post_data = core.write_json({
-					operating_system = "mac",
+					operating_system = "windows",
 					version = "1.1.4",
 					ms_type = global_ms_type,
 					dev_phase = "release",

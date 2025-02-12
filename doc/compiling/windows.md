@@ -8,6 +8,15 @@
 - [Git](https://git-scm.com/downloads)
 
 
+## Download Minetest's fork of Irrlicht:
+
+```bash
+git clone https://github.com/minetest/irrlicht.git lib/irrlichtmt
+cd lib/irrlichtmt
+git checkout 1.9.0mt13
+cd ../..
+```
+
 ## Compiling and installing the dependencies
 
 It is highly recommended to use vcpkg as package manager.
@@ -17,7 +26,6 @@ After you successfully built vcpkg you can easily install the required libraries
 vcpkg install zlib zstd curl[winssl] openal-soft libvorbis libogg libjpeg-turbo sqlite3 freetype luajit gmp jsoncpp opengl-registry gettext --triplet x64-windows
 ```
 
-- **Don't forget about IrrlichtMt.** The easiest way is to clone it to `lib/irrlichtmt` as described in the Linux section.
 - `curl` is optional, but required to read the serverlist, `curl[winssl]` is required to use the content store.
 - `openal-soft`, `libvorbis` and `libogg` are optional, but required to use sound.
 - `luajit` is optional, it replaces the integrated Lua interpreter with a faster just-in-time interpreter.
@@ -31,30 +39,18 @@ Use `--triplet` to specify the target triplet, e.g. `x64-windows` or `x86-window
 
 ## Compile Minetest
 
-### a) Using the vcpkg toolchain and CMake GUI
-
-1. Start up the CMake GUI
-2. Select **Browse Source...** and select DIR/minetest
-3. Select **Browse Build...** and select DIR/minetest-build
-4. Select **Configure**
-5. Choose the right visual Studio version and target platform. It has to match the version of the installed dependencies
-6. Choose **Specify toolchain file for cross-compiling**
-7. Click **Next**
-8. Select the vcpkg toolchain file e.g. `D:/vcpkg/scripts/buildsystems/vcpkg.cmake`
-9. Click Finish
-10. Wait until cmake have generated the cash file
-11. If there are any errors, solve them and hit **Configure**
-12. Click **Generate**
-13. Click **Open Project**
-14. Compile Minetest inside Visual studio.
-
-### b) Using the vcpkg toolchain and the commandline
+### Using the vcpkg toolchain and the commandline
 
 Run the following script in PowerShell:
 
-```powershell
-cmake . -G"Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_GETTEXT=OFF -DENABLE_CURSES=OFF
-cmake --build . --config Release
+```cmd
+cmake.exe . -G"Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DGETTEXT_MSGFMT=path/to/msgfmt.exe -DRUN_IN_PLACE=FALSE
+cmake.exe --build . --config Release
+```
+
+Run the following script to create the msi installer (REMEMBER TO INSTALL WiX Toolset before proceeding)
+```cmd
+cmake.exe --build . --config Release --target PACKAGE
 ```
 Make sure that the right compiler is selected and the path to the vcpkg toolchain is correct.
 

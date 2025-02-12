@@ -736,6 +736,13 @@ static bool read_config_file(const Settings &cmd_args)
 		g_settings_path = cmd_args.get("config");
 	} else {
 		std::vector<std::string> filenames;
+
+		// Add special path to predefined minetest.conf
+		filenames.push_back(porting::path_share + DIR_DELIM + "minetest.conf");
+		//char exec_path[1024];
+		//if (!porting::getCurrentExecPath(exec_path, sizeof(exec_path)))
+		//	return false;
+		
 		filenames.push_back(porting::path_user + DIR_DELIM + "minetest.conf");
 		// Legacy configuration file location
 		filenames.push_back(porting::path_user +
