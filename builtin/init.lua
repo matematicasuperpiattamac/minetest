@@ -45,7 +45,7 @@ if INIT == "game" then
 	dofile(gamepath .. "init.lua")
 	assert(not core.get_http_api)
 elseif INIT == "mainmenu" then
-	local mm_script = core.settings:get("main_menu_script")
+	local mm_script = scriptdir .. core.settings:get("main_menu_script")
 	local custom_loaded = false
 	if mm_script and mm_script ~= "" then
 		local testfile = io.open(mm_script, "r")

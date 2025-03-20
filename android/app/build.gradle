@@ -1,15 +1,21 @@
 apply plugin: 'com.android.application'
 
+import org.gradle.internal.os.OperatingSystem
+
 android {
-	compileSdkVersion 33
-	buildToolsVersion '33.0.2'
+	compileSdk 34
+	//buildToolsVersion '33.0.2'
 	ndkVersion "$ndk_version"
 	defaultConfig {
 		applicationId 'net.minetest.minetest'
-		minSdkVersion 21
-		targetSdkVersion 33
+		minSdk 28
+		targetSdk 33
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
 		versionCode project.versionCode
+	}
+
+	buildFeatures {
+		buildConfig = true
 	}
 
 	// load properties
@@ -46,9 +52,10 @@ android {
 	}
 
 	compileOptions {
-		sourceCompatibility JavaVersion.VERSION_1_8
-		targetCompatibility JavaVersion.VERSION_1_8
+		sourceCompatibility JavaVersion.VERSION_11
+		targetCompatibility JavaVersion.VERSION_11
 	}
+	namespace 'net.minetest.minetest'
 }
 
 task prepareAssets() {
@@ -63,13 +70,16 @@ task prepareAssets() {
 	}
 	doLast {
 		copy {
-			from "${projRoot}/minetest.conf.example", "${projRoot}/README.md" into assetsFolder
+			from "${projRoot}/minetest.conf", "${projRoot}/README.md" into assetsFolder
 		}
 		copy {
 			from "${projRoot}/doc/lgpl-2.1.txt" into assetsFolder
 		}
 		copy {
 			from "${projRoot}/builtin" into "${assetsFolder}/builtin"
+		}
+		copy {
+			from "${projRoot}/games" into "${assetsFolder}/games"
 		}
 		copy {
 			from "${projRoot}/client/shaders" into "${assetsFolder}/client/shaders"
@@ -91,7 +101,11 @@ task prepareAssets() {
 			def moPath = "${assetsFolder}/locale/${poFile.parentFile.name}/LC_MESSAGES/"
 			file(moPath).mkdirs()
 			exec {
-				commandLine 'msgfmt', '-o', "${moPath}/minetest.mo", poFile
+				if (OperatingSystem.current().isWindows()) {
+					commandLine 'D:\\dev\\gettext\\bin\\msgfmt.exe', '-o', "${moPath}/minetest.mo", poFile
+				} else {
+					commandLine 'msgfmt', '-o', "${moPath}/minetest.mo", poFile
+				}
 			}
 		}
 
@@ -106,7 +120,7 @@ task prepareAssets() {
 }
 
 preBuild.dependsOn zipAssets
-prepareAssets.dependsOn ':native:getDeps'
+//prepareAssets.dependsOn ':native:getDeps'
 
 // Map for the version code that gives each ABI a value.
 import com.android.build.OutputFile
