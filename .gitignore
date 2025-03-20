@@ -124,3 +124,6 @@ compile_commands.json
 
 # Generated mod storage database
 client/mod_storage.sqlite
+
+# Android
+!android/native/deps/**
