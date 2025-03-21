@@ -8,4 +8,3 @@ build
 local.properties
 native/.*
 native/build
-native/deps
