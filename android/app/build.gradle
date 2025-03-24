@@ -8,7 +8,7 @@ android {
 	ndkVersion "$ndk_version"
 	defaultConfig {
 		applicationId 'it.matematicasuperpiatta.minetest'
-		minSdk 28
+		minSdk 21
 		targetSdk 33
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
 		versionCode project.versionCode

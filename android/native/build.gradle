@@ -9,7 +9,7 @@ android {
 	//buildToolsVersion '33.0.2'
 	ndkVersion "$ndk_version"
 	defaultConfig {
-		minSdk 28
+		minSdk 21
 		targetSdk 33
 		externalNativeBuild {
             cmake {
