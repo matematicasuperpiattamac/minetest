@@ -7,7 +7,7 @@ android {
 	//buildToolsVersion '33.0.2'
 	ndkVersion "$ndk_version"
 	defaultConfig {
-		applicationId 'net.minetest.minetest'
+		applicationId 'it.matematicasuperpiatta.minetest'
 		minSdk 28
 		targetSdk 33
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -79,7 +79,7 @@ task prepareAssets() {
 			from "${projRoot}/builtin" into "${assetsFolder}/builtin"
 		}
 		copy {
-			from "${projRoot}/games" into "${assetsFolder}/games"
+			from "${projRoot}/games/matematicasuperpiatta" into "${assetsFolder}/games/matematicasuperpiatta"
 		}
 		copy {
 			from "${projRoot}/client/shaders" into "${assetsFolder}/client/shaders"
