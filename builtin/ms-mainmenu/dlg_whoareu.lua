@@ -26,6 +26,24 @@ local error_msg = ""
 
 local http = core.get_http_api()
 
+function print_all(title, o)
+	core.log("warning", title)
+	core.log("warning", dump(o))
+end
+
+function dump(o)
+	if type(o) == 'table' then
+	   local s = '{ '
+	   for k,v in pairs(o) do
+		  if type(k) ~= 'number' then k = '"'..k..'"' end
+		  s = s .. '['..k..'] = ' .. dump(v) .. ','
+	   end
+	   return s .. '} '
+	else
+	   return tostring(o)
+	end
+ end
+
 --------------------------------------------------------------------------------
 --
 -- Username dialog
@@ -65,6 +83,9 @@ end
 local function handle_whoareu_buttons(this, fields, tabname, tabdata)
 	if (fields.key_enter or fields.btn_next) then
 		if (fields.username ~= "") then
+			while string.sub(fields.username, -1, -1) == ' ' do
+				fields.username = string.sub(fields.username, 1, -2)
+			end
 			whoareu = fields.username
 			local passwd_dlg = create_passwd_dlg()
 			passwd_dlg:set_parent(this)
@@ -167,6 +188,9 @@ local function handle_passwd_buttons(this, fields, tabname, tabdata)
 
 	if fields.passwd ~= "" and (fields.key_enter or fields.btn_play) then
 		-- Wiscom auth
+		while string.sub(fields.passwd, -1, -1) == ' ' do
+			fields.passwd = string.sub(fields.passwd, 1, -2)
+		end
 		passwd = fields.passwd
 		local response = http.fetch_sync({
 			url = WISCOMS_URL .. "/api/token/",

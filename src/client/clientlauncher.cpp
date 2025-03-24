@@ -391,6 +391,16 @@ bool ClientLauncher::launch_game(std::string &error_message,
 		}
 	}
 
+	// [MS] Update minetest.conf name and password
+	g_settings->set("cmd_usr", "");
+	g_settings->set("cmd_pwd", "");
+	if (cmd_args.exists("name") && cmd_args.exists("password"))
+	{
+		g_settings->set("cmd_usr", start_data.name);
+		g_settings->set("cmd_pwd", start_data.password);
+	}
+	g_settings->updateConfigFile(g_settings_path.c_str());
+
 	// If a world was commanded, append and select it
 	// This is provieded by "get_world_from_cmdline()", main.cpp
 	if (!start_data.world_path.empty()) {

@@ -41,7 +41,8 @@ const std::string button_image_names[] = {
 	"jump_btn.png",
 	"down.png",
 	"zoom.png",
-	"aux1_btn.png"
+	"aux1_btn.png",
+	"inventory_btn.png"
 };
 
 const std::string joystick_image_names[] = {
@@ -392,8 +393,8 @@ TouchScreenGUI::TouchScreenGUI(IrrlichtDevice *device, IEventReceiver *receiver)
 		m_device(device),
 		m_guienv(device->getGUIEnvironment()),
 		m_receiver(receiver),
-		m_settings_bar(device, receiver),
-		m_rare_controls_bar(device, receiver)
+		m_settings_bar(device, receiver)
+		//m_rare_controls_bar(device, receiver)
 {
 	for (auto &button : m_buttons) {
 		button.gui_button     = nullptr;
@@ -463,8 +464,8 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 	} else {
 		m_joystick_btn_off = initJoystickButton(joystick_off_id,
 				rect<s32>(button_size,
-						m_screensize.Y - button_size * 3,
-						button_size * 3,
+						m_screensize.Y - button_size * 4,
+						button_size * 4,
 						m_screensize.Y - button_size), 0);
 	}
 
@@ -495,14 +496,17 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 			L"H", false);
 
 	// init zoom button
+	/*
 	initButton(zoom_id,
 			rect<s32>(m_screensize.X - 1.25f * button_size,
 					m_screensize.Y - 4 * button_size,
 					m_screensize.X - 0.25f * button_size,
 					m_screensize.Y - 3 * button_size),
 			L"z", false);
+	*/
 
 	// init aux1 button
+	/*
 	if (!m_joystick_triggers_aux1)
 		initButton(aux1_id,
 				rect<s32>(m_screensize.X - 1.25f * button_size,
@@ -510,28 +514,44 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 						m_screensize.X - 0.25f * button_size,
 						m_screensize.Y - 1.5f * button_size),
 				L"spc1", false);
+	*/
+
+	// init inv button
+	/*initButton(inventory_id,
+		rect<s32>(0.25 * button_size,
+				m_screensize.Y - ((RARE_CONTROLS_BAR_Y_OFFSET + 1.0) * button_size) + (0.5 * button_size),
+				1.25 * button_size,
+				m_screensize.Y - (RARE_CONTROLS_BAR_Y_OFFSET * button_size) + (0.5 * button_size)),
+			L"inv", false);*/
+	initButton(inventory_id, 
+		rect<s32>(m_screensize.X - (1.25 * button_size),
+				m_screensize.Y - (3 * button_size),
+				m_screensize.X - (0.25 * button_size),
+				m_screensize.Y - (2 * button_size)),
+		L"inv", false);
 
 	m_settings_bar.init(m_texturesource, "gear_icon.png", settings_starter_id,
 			v2s32(m_screensize.X - 1.25f * button_size,
-					m_screensize.Y - (SETTINGS_BAR_Y_OFFSET + 1.0f) * button_size
-							+ 0.5f * button_size),
+					m_screensize.Y - (4 * button_size)),
 			v2s32(m_screensize.X - 0.25f * button_size,
-					m_screensize.Y - SETTINGS_BAR_Y_OFFSET * button_size
-							+ 0.5f * button_size),
+					m_screensize.Y - (3 * button_size)),
 			AHBB_Dir_Right_Left, 3.0f);
 
-	m_settings_bar.addButton(fly_id, L"fly", "fly_btn.png");
-	m_settings_bar.addButton(noclip_id, L"noclip", "noclip_btn.png");
-	m_settings_bar.addButton(fast_id, L"fast", "fast_btn.png");
+	// m_settings_bar.addButton(fly_id, L"fly", "fly_btn.png");
+	// m_settings_bar.addButton(noclip_id, L"noclip", "noclip_btn.png");
+	// m_settings_bar.addButton(fast_id, L"fast", "fast_btn.png");
+	m_settings_bar.addButton(exit_id, L"exit", "exit_btn.png");
 	m_settings_bar.addButton(debug_id, L"debug", "debug_btn.png");
 	m_settings_bar.addButton(camera_id, L"camera", "camera_btn.png");
 	m_settings_bar.addButton(range_id, L"rangeview", "rangeview_btn.png");
 	m_settings_bar.addButton(minimap_id, L"minimap", "minimap_btn.png");
+	m_settings_bar.addButton(zoom_id, L"z", "zoom.png");
 
 	// Chat is shown by default, so chat_hide_btn.png is shown first.
-	m_settings_bar.addToggleButton(toggle_chat_id, L"togglechat",
-			"chat_hide_btn.png", "chat_show_btn.png");
+	// m_settings_bar.addToggleButton(toggle_chat_id, L"togglechat",
+	// 		"chat_hide_btn.png", "chat_show_btn.png");
 
+	/*
 	m_rare_controls_bar.init(m_texturesource, "rare_controls.png",
 			rare_controls_starter_id,
 			v2s32(0.25f * button_size,
@@ -546,6 +566,7 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 	m_rare_controls_bar.addButton(inventory_id, L"inv", "inventory_btn.png");
 	m_rare_controls_bar.addButton(drop_id, L"drop", "drop_btn.png");
 	m_rare_controls_bar.addButton(exit_id, L"exit", "exit_btn.png");
+	*/
 
 	m_initialized = true;
 }
@@ -745,29 +766,37 @@ void TouchScreenGUI::translateEvent(const SEvent &event)
 		if (button != after_last_element_id) {
 			handleButtonEvent(button, eventID, true);
 			m_settings_bar.deactivate();
-			m_rare_controls_bar.deactivate();
+			// m_rare_controls_bar.deactivate();
 		} else if (isHotbarButton(event)) {
 			m_settings_bar.deactivate();
-			m_rare_controls_bar.deactivate();
+			// m_rare_controls_bar.deactivate();
 			// already handled in isHotbarButton()
 		} else if (m_settings_bar.isButton(event)) {
-			m_rare_controls_bar.deactivate();
+			// m_rare_controls_bar.deactivate();
 			// already handled in isSettingsBarButton()
-		} else if (m_rare_controls_bar.isButton(event)) {
+		}
+		/* else if (m_rare_controls_bar.isButton(event)) {
 			m_settings_bar.deactivate();
 			// already handled in isSettingsBarButton()
-		} else {
+		} */
+		else {
 			// handle non button events
-			if (m_settings_bar.active() || m_rare_controls_bar.active()) {
+			if (m_settings_bar.active()/* || m_rare_controls_bar.active()*/) {
 				m_settings_bar.deactivate();
-				m_rare_controls_bar.deactivate();
+				// m_rare_controls_bar.deactivate();
 				return;
 			}
 
 			// Select joystick when joystick tapped (fixed joystick position) or
 			// when left 1/3 of screen dragged (free joystick position)
+
+			// Edited for MS:
+			// 1/4 of the screen horizontally
+			// 1/2 of the screen vertically
 			if ((m_fixed_joystick && dir_fixed.getLengthSQ() <= fixed_joystick_range_sq) ||
-					(!m_fixed_joystick && X < m_screensize.X / 3.0f)) {
+					(!m_fixed_joystick &&
+						X < m_screensize.X / 4.0f * 1.0f &&
+						Y > m_screensize.Y / 2.0f * 1.0f)) {
 				// If we don't already have a starting point for joystick, make this the one.
 				if (!m_has_joystick_id) {
 					m_has_joystick_id           = true;
@@ -1069,7 +1098,7 @@ void TouchScreenGUI::step(float dtime)
 	}
 
 	m_settings_bar.step(dtime);
-	m_rare_controls_bar.step(dtime);
+	// m_rare_controls_bar.step(dtime);
 }
 
 void TouchScreenGUI::resetHotbarRects()
@@ -1102,10 +1131,10 @@ void TouchScreenGUI::setVisible(bool visible)
 			handleReleaseEvent(m_known_ids.begin()->id);
 
 		m_settings_bar.hide();
-		m_rare_controls_bar.hide();
+		// m_rare_controls_bar.hide();
 	} else {
 		m_settings_bar.show();
-		m_rare_controls_bar.show();
+		// m_rare_controls_bar.show();
 	}
 }
 

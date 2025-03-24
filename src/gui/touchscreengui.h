@@ -42,6 +42,7 @@ typedef enum
 	crunch_id,
 	zoom_id,
 	aux1_id,
+	inventory_id,
 	after_last_element_id,
 	settings_starter_id,
 	rare_controls_starter_id,
@@ -54,7 +55,6 @@ typedef enum
 	minimap_id,
 	toggle_chat_id,
 	chat_id,
-	inventory_id,
 	drop_id,
 	exit_id,
 	joystick_off_id,
@@ -295,7 +295,7 @@ private:
 	AutoHideButtonBar m_settings_bar;
 
 	// rare controls bar
-	AutoHideButtonBar m_rare_controls_bar;
+	// AutoHideButtonBar m_rare_controls_bar;
 };
 
 extern TouchScreenGUI *g_touchscreengui;
