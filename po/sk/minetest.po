@@ -1413,7 +1413,7 @@ msgid "Exit to Menu"
 msgstr "Návrat do menu"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Ukončiť hru"
 
 #: src/client/game.cpp

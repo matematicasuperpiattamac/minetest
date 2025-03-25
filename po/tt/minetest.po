@@ -1368,7 +1368,7 @@ msgid "Exit to Menu"
 msgstr "Менюга чыгу"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Уеннан чыгу"
 
 #: src/client/game.cpp

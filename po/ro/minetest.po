@@ -1410,7 +1410,7 @@ msgid "Exit to Menu"
 msgstr "Ieși în Meniu"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Ieși din joc"
 
 #: src/client/game.cpp

@@ -1403,7 +1403,7 @@ msgid "Exit to Menu"
 msgstr "退出至菜单"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "退出至操作系统"
 
 #: src/client/game.cpp

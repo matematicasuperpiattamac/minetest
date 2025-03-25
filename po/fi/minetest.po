@@ -1390,7 +1390,7 @@ msgid "Exit to Menu"
 msgstr "Poistu valikkoon"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Poistu käyttöjärjestelmään"
 
 #: src/client/game.cpp

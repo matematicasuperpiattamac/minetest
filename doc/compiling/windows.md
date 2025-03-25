@@ -44,13 +44,13 @@ Use `--triplet` to specify the target triplet, e.g. `x64-windows` or `x86-window
 Run the following script in PowerShell:
 
 ```cmd
-cmake.exe . -G"Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DGETTEXT_MSGFMT=path/to/msgfmt.exe -DRUN_IN_PLACE=FALSE
-cmake.exe --build . --config Release
+path/to/cmake.exe . -G"Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=path/to/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DGETTEXT_MSGFMT=path/to/msgfmt.exe -DRUN_IN_PLACE=FALSE
+path/to/cmake.exe --build . --config Release
 ```
 
 Run the following script to create the msi installer (REMEMBER TO INSTALL WiX Toolset before proceeding)
 ```cmd
-cmake.exe --build . --config Release --target PACKAGE
+path/to/cmake.exe --build . --config Release --target PACKAGE
 ```
 Make sure that the right compiler is selected and the path to the vcpkg toolchain is correct.
 

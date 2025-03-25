@@ -1425,7 +1425,7 @@ msgid "Exit to Menu"
 msgstr "Thoát ra màn hình chính"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Thoát Minetest"
 
 #: src/client/game.cpp

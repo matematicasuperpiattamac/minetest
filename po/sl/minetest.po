@@ -1462,7 +1462,7 @@ msgid "Exit to Menu"
 msgstr "Izhod na meni"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Zapri minetest"
 
 #: src/client/game.cpp

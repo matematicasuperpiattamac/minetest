@@ -1373,7 +1373,7 @@ msgid "Exit to Menu"
 msgstr "Puta ki te pae tahua"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Tata kēmu taki puta"
 
 #: src/client/game.cpp

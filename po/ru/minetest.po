@@ -1407,7 +1407,7 @@ msgid "Exit to Menu"
 msgstr "Выйти в меню"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Выйти в ОС"
 
 #: src/client/game.cpp

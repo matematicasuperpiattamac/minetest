@@ -1414,7 +1414,7 @@ msgid "Exit to Menu"
 msgstr "ออกจากเมนู"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "อธิบายระบบปฏิบัติการ"
 
 #: src/client/game.cpp

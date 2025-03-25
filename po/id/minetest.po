@@ -1405,7 +1405,7 @@ msgid "Exit to Menu"
 msgstr "Menu Utama"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Tutup Aplikasi"
 
 #: src/client/game.cpp

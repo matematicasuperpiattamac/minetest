@@ -1410,7 +1410,7 @@ msgid "Exit to Menu"
 msgstr "Sair para o Menu"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Sair para o S.O"
 
 #: src/client/game.cpp

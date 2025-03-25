@@ -1423,7 +1423,7 @@ msgid "Exit to Menu"
 msgstr "बंद करके मेनू पर जाएं"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "बंद करके ओ॰ एस॰ में जाएं"
 
 #: src/client/game.cpp

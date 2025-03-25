@@ -1411,7 +1411,7 @@ msgid "Exit to Menu"
 msgstr "Menu principal"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Quitter le jeu"
 
 #: src/client/game.cpp

@@ -1434,7 +1434,7 @@ msgid "Exit to Menu"
 msgstr "메뉴로 나가기"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "게임 종료"
 
 #: src/client/game.cpp

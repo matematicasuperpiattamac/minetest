@@ -1490,7 +1490,7 @@ msgid "Exit to Menu"
 msgstr "Toka kwenye menyu"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Toka kwa OS"
 
 #: src/client/game.cpp

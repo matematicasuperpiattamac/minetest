@@ -1395,7 +1395,7 @@ msgid "Exit to Menu"
 msgstr "Irten menura"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Irten sistema eragilera"
 
 #: src/client/game.cpp

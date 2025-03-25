@@ -1553,8 +1553,8 @@ msgid "Exit to Menu"
 msgstr "Menu Principale"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
-msgstr "Torna al S.O."
+msgid "Exit game"
+msgstr "Esci dal gioco"
 
 #: src/client/game.cpp
 msgid "Exit to Verse"

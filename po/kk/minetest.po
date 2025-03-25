@@ -1362,7 +1362,7 @@ msgid "Exit to Menu"
 msgstr "Мәзірге шығу"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Ойыннан шығу"
 
 #: src/client/game.cpp

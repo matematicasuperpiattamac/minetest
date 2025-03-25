@@ -1420,7 +1420,7 @@ msgid "Exit to Menu"
 msgstr "Menüye Çık"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Oyundan Çık"
 
 #: src/client/game.cpp

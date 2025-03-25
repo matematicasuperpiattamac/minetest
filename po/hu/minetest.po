@@ -1409,7 +1409,7 @@ msgid "Exit to Menu"
 msgstr "Kilépés a főmenübe"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Kilépés a játékból"
 
 #: src/client/game.cpp

@@ -1415,7 +1415,7 @@ msgid "Exit to Menu"
 msgstr "Sair para o menu"
 
 #: src/client/game.cpp
-msgid "Exit to OS"
+msgid "Exit game"
 msgstr "Sair do Minetest"
 
 #: src/client/game.cpp
