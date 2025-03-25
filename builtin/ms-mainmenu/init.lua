@@ -262,6 +262,11 @@ local function init_globals(tabs)
 	--core.log("warning", "gamelist: " .. core.write_json(pkgmgr.games))
 	core.log("warning", "menu_last_game: " .. core.write_json(pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))))
 
+	local l1, l2 = core.get_language()
+	core.log("warning", "lang conf: " .. core.settings:get("language"))
+	core.log("warning", "lang #1: " .. l1)
+	core.log("warning", "lang #2: " .. l2)
+
 	mm_game_theme.reset()
 	mm_game_theme.update_game(pkgmgr.find_by_gameid(core.settings:get("menu_last_game")))
 end
