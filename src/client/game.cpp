@@ -2090,7 +2090,7 @@ void Game::processKeyInput()
 	} else if (wasKeyPressed(KeyType::TOGGLE_CHAT)) {
 		m_game_ui->toggleChat(client);
 	} else if (wasKeyPressed(KeyType::TOGGLE_FOG)) {
-		toggleFog();
+		//toggleFog();
 	} else if (wasKeyDown(KeyType::TOGGLE_UPDATE_CAMERA)) {
 		toggleUpdateCamera();
 	} else if (wasKeyPressed(KeyType::TOGGLE_DEBUG)) {
@@ -4398,7 +4398,8 @@ void Game::showPauseMenu()
 		);
 	*/
 #else
-	static const std::string control_text_template = strgettext("Controls:\n"
+static const std::string control_text_template = "";
+	/*static const std::string control_text_template = strgettext("Controls:\n"
 		"- %s: move forwards\n"
 		"- %s: move backwards\n"
 		"- %s: move left\n"
@@ -4412,7 +4413,7 @@ void Game::showPauseMenu()
 		"- Mouse: turn/look\n"
 		"- Mouse wheel: select item\n"
 		"- %s: chat\n"
-	);
+	);*/
 
 	char control_text_buf[600];
 
@@ -4450,13 +4451,13 @@ void Game::showPauseMenu()
 
 #ifndef __ANDROID__
 #if USE_SOUND
-	if (g_settings->getBool("enable_sound")) {
+	/*if (g_settings->getBool("enable_sound")) {
 		os << "button_exit[4," << (ypos++) << ";3,0.5;btn_sound;"
 			<< strgettext("Sound Volume") << "]";
-	}
+	}*/
 #endif
-	os	<< "button_exit[4," << (ypos++) << ";3,0.5;btn_key_config;"
-		<< strgettext("Change Keys")  << "]";
+	//os	<< "button_exit[4," << (ypos++) << ";3,0.5;btn_key_config;"
+	//	<< strgettext("Change Keys")  << "]";
 #endif
 	os	<< "button_exit[4," << (ypos++) << ";3,0.5;btn_exit_menu;"
 		<< strgettext("Exit to Menu") << "]";

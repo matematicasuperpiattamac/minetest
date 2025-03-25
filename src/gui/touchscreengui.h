@@ -70,7 +70,7 @@ typedef enum
 	AHBB_Dir_Right_Left
 } autohide_button_bar_dir;
 
-#define MIN_DIG_TIME_MS 500
+#define MIN_DIG_TIME_MS 200
 #define BUTTON_REPEAT_DELAY 0.2f
 #define SETTINGS_BAR_Y_OFFSET 5
 #define RARE_CONTROLS_BAR_Y_OFFSET 5
