@@ -4,12 +4,11 @@ import org.gradle.internal.os.OperatingSystem
 
 android {
 	compileSdk 34
-	//buildToolsVersion '33.0.2'
 	ndkVersion "$ndk_version"
 	defaultConfig {
 		applicationId 'it.matematicasuperpiatta.minetest'
 		minSdk 21
-		targetSdk 33
+		targetSdk 34
 		versionName "${versionMajor}.${versionMinor}.${versionPatch}"
 		versionCode project.versionCode
 	}
@@ -102,7 +101,7 @@ task prepareAssets() {
 			file(moPath).mkdirs()
 			exec {
 				if (OperatingSystem.current().isWindows()) {
-					commandLine 'D:\\dev\\gettext\\bin\\msgfmt.exe', '-o', "${moPath}/minetest.mo", poFile
+					commandLine 'C:\\dev\\gettext\\bin\\msgfmt.exe', '-o', "${moPath}/minetest.mo", poFile
 				} else {
 					commandLine 'msgfmt', '-o', "${moPath}/minetest.mo", poFile
 				}

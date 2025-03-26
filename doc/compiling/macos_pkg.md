@@ -23,6 +23,7 @@ git clone https://github.com/matematicasuperpiattamac/minetest.git ms_client_mac
 cd ms_client_mac
 ```
 
+(Obsolete, now irrlicht is included in the repo)
 Download Minetest's fork of Irrlicht:
 
 ```bash

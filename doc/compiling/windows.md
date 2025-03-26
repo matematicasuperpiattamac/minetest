@@ -8,7 +8,7 @@
 - [Git](https://git-scm.com/downloads)
 
 
-## Download Minetest's fork of Irrlicht:
+## Download Minetest's fork of Irrlicht (Obsolete, now irrlicht is included in the repo):
 
 ```bash
 git clone https://github.com/minetest/irrlicht.git lib/irrlichtmt
