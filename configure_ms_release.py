@@ -20,7 +20,7 @@ class Configuration:
         ########## EDIT ##########
         self.version = '1.2.0'
         self.api = 'release'
-        self.os = 'windows'
+        self.os = 'android'
         self.dev_phase = 'release'
         self.server_type = 'ecs'
         self.debug = 'false'

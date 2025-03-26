@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -82,7 +83,11 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		IntentFilter filter = new IntentFilter(ACTION_UPDATE);
-		registerReceiver(myReceiver, filter);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(myReceiver, filter, Context.RECEIVER_EXPORTED);
+		} else {
+			registerReceiver(myReceiver, filter);
+		}
 		mProgressBar = findViewById(R.id.progressBar);
 		mTextView = findViewById(R.id.textView);
 		sharedPreferences = getSharedPreferences(SETTINGS, Context.MODE_PRIVATE);
