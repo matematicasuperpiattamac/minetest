@@ -58,6 +58,7 @@ global_data = {
 	message_text = fgettext("Unable to connect to the server!\n\nCheck your internet connection and restart Matematica Superpiatta.\nIf the problem persists contact us at:\nassistenza@matematicasuperpiatta.it")
 }
 global_ms_type = "full"
+global_language = "en"
 lambda_waiting = false
 lambda_read = true
 lambda_error = false
@@ -263,6 +264,9 @@ local function init_globals(tabs)
 	core.log("warning", "menu_last_game: " .. core.write_json(pkgmgr.find_by_gameid(core.settings:get("menu_last_game"))))
 
 	local l1, l2 = core.get_language()
+	if l2 ~= "" then
+		global_language = l2
+	end
 	core.log("warning", "lang conf: " .. core.settings:get("language"))
 	core.log("warning", "lang #1: " .. l1)
 	core.log("warning", "lang #2: " .. l2)
