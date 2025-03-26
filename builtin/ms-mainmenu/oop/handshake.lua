@@ -89,7 +89,7 @@ function Handshake:launchpad()
 				post_data = core.write_json({
 					operating_system = "windows",
 					version = "1.2.0",
-					ms_type = global_ms_type,
+					ms_type = "full",
 					dev_phase = "release",
 					server_type = "ecs",
 					lang = global_language,
