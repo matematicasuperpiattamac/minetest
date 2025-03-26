@@ -42,15 +42,12 @@ end
 
 local function handle_required_version_buttons(this, fields, tabname, tabdata)
 	if (fields.key_enter or fields.btn_update) then
-		local separator = package.config:sub(1,1)
-		local cmd = ""
-		if separator == '\\' then
-			cmd = "start "
-		else
-			cmd = "xdg-open "
-		end
 		local url = "https://www.matematicasuperpiatta.it/gioco"
-		os.execute(cmd .. url)
+		local url_android = "https://play.google.com/store/apps/details?id=it.matematicasuperpiatta.minetest"
+		if global_os == "android" then
+			url = url_android
+		end
+		core.open_url(url)
 		this:delete()
 		core.close()
 		return true
@@ -90,15 +87,12 @@ local function handle_pending_version_buttons(this, fields, tabname, tabdata)
 	end
 
 	if (fields.btn_update) then
-		local separator = package.config:sub(1,1)
-		local cmd = ""
-		if separator == '\\' then
-			cmd = "start "
-		else
-			cmd = "xdg-open "
-		end
 		local url = "https://www.matematicasuperpiatta.it/gioco"
-		os.execute(cmd .. url)
+		local url_android = "https://play.google.com/store/apps/details?id=it.matematicasuperpiatta.minetest"
+		if global_os == "android" then
+			url = url_android
+		end
+		core.open_url(url)
 		this:delete()
 		core.close()
 		return true

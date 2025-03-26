@@ -127,10 +127,10 @@ class Configuration:
         if self.os not in entries_operating_system:
             print("Cannot update os. Value not valid: " + self.os)
         
-        path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
+        path = os.path.join(self.project_root, "builtin/ms-mainmenu/init.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
-            if 'operating_system =' in line:
+            if 'global_os =' in line:
                 pre, _ = line.split("=")
                 lines[i] = pre + '= "' + self.os + '",\n'
         Configuration.write_file(path, lines)
