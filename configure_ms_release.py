@@ -20,7 +20,7 @@ class Configuration:
         ########## EDIT ##########
         self.version = '1.2.0'
         self.api = 'release'
-        self.os = 'android'
+        self.os = 'windows'
         self.dev_phase = 'release'
         self.server_type = 'ecs'
         self.debug = 'false'
@@ -30,15 +30,16 @@ class Configuration:
         ##########################
     
     def update_all(self):
-        self.update_version()
-        self.update_api()
-        self.update_os()
-        self.update_dev_phase()
-        self.update_server_type()
-        self.update_debug()
-        self.update_monitor()
-        self.update_slack()
-        self.update_android_code()
+        valid = self.update_version()
+        valid &= self.update_api()
+        valid &= self.update_os()
+        valid &= self.update_dev_phase()
+        valid &= self.update_server_type()
+        valid &= self.update_debug()
+        valid &= self.update_monitor()
+        valid &= self.update_slack()
+        valid &= self.update_android_code()
+        return valid
     
     def print(self):
         print("Ready for release!\n")
@@ -69,6 +70,7 @@ class Configuration:
     def update_version(self):
         if len(self.version.split('.')) != 3:
             print("Cannot update version. Format not valid: " + self.version)
+            return False
         major, minor, patch = self.version.split('.')
         
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
@@ -107,12 +109,12 @@ class Configuration:
             if "version:" in line:
                 lines[i] = "version: " + self.version + "\n"
         Configuration.write_file(path, lines)
-
+        return True
 
     def update_api(self):
         if self.api not in entries_api:
             print("Cannot update api. Value not valid: " + self.api)
-        
+            return False
         path = os.path.join(self.project_root, "minetest.conf")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -121,18 +123,18 @@ class Configuration:
                 post = api_dev if self.api == "dev" else api_release
                 lines[i] = pre + '= ' + post + '\n'
         Configuration.write_file(path, lines)
-    
+        return True
 
     def update_os(self):
         if self.os not in entries_operating_system:
             print("Cannot update os. Value not valid: " + self.os)
-        
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/init.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
             if 'global_os =' in line:
                 pre, _ = line.split("=")
-                lines[i] = pre + '= "' + self.os + '",\n'
+                lines[i] = pre + '= "' + self.os + '"\n'
         Configuration.write_file(path, lines)
 
         path = os.path.join(self.project_root, "minetest.conf")
@@ -142,11 +144,12 @@ class Configuration:
                 dl = 0 if self.os == 'linux' else 3
                 lines[i] = "debug_log_level = " + str(dl) + "\n"
         Configuration.write_file(path, lines)
+        return True
     
     def update_dev_phase(self):
         if self.dev_phase not in entries_dev_phase:
             print("Cannot update dev_phase. Value not valid: " + self.dev_phase)
-
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -180,12 +183,12 @@ class Configuration:
                     ok = not post.startswith("beta")
                     lines[i] = line if ok else pre + "/wiscoms" + post[4:]
         Configuration.write_file(path, lines)
+        return True
     
-
     def update_server_type(self):
         if self.server_type not in entries_server_type:
             print("Cannot update server_type. Value not valid: " + self.server_type)
-        
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -193,12 +196,13 @@ class Configuration:
                 pre, _ = line.split("=")
                 lines[i] = pre + '= "' + self.server_type + '",\n'
         Configuration.write_file(path, lines)
+        return True
     
-
+    
     def update_debug(self):
         if self.debug not in entries_debug:
             print("Cannot update debug. Value not valid: " + self.debug)
-        
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -206,11 +210,12 @@ class Configuration:
                 pre, _ = line.split("=")
                 lines[i] = pre + '= "' + self.debug + '",\n'
         Configuration.write_file(path, lines)
-
+        return True
+    
     def update_monitor(self):
         if self.monitor not in entries_monitor:
             print("Cannot update monitor. Value not valid: " + self.monitor)
-
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -218,12 +223,13 @@ class Configuration:
                 pre, post = line.split("=")
                 lines[i] = pre + '= "' + self.monitor + '",\n'
         Configuration.write_file(path, lines)
-
-
+        return True
+    
+    
     def update_slack(self):
         if self.slack not in entries_slack:
             print("Cannot update slack. Value not valid: " + self.slack)
-        
+            return False
         path = os.path.join(self.project_root, "builtin/ms-mainmenu/oop/handshake.lua")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
@@ -231,7 +237,8 @@ class Configuration:
                 pre, post = line.split("=")
                 lines[i] = pre + '= "' + self.slack + '",\n'
         Configuration.write_file(path, lines)
-
+        return True
+    
     def update_android_code(self):
         path = os.path.join(self.project_root, "android/build.gradle")
         lines = Configuration.read_file(path)
@@ -239,9 +246,12 @@ class Configuration:
             if 'project.ext.set("versionCode", ' in line:
                 lines[i] = 'project.ext.set("versionCode", ' + self.android_code + ')\n'
         Configuration.write_file(path, lines)
+        return True
 
 if __name__ == "__main__":
     config = Configuration()
-    config.update_all()
-    config.print()
-    
+    valid = config.update_all()
+    if not valid:
+        raise ValueError("Something Wrong (check above)")
+    else:
+        config.print()
