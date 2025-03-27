@@ -40,20 +40,10 @@ parts:
       - libc6
       - libstdc++6
       - libpq-dev
-      #- libcurl4
-      #- libcurl3-gnutls
-      #- libldap-2.5-0
-      #- libnghttp2-14
-      #- libpsl-dev
-      #- librtmp1
-      #- libsasl2-2
-      #- libx11-dev
-      #- libxi-dev
-      #- libjpeg-dev
-      #- libjsoncpp-dev
-      #- libopenal-dev
-      #- libpq-dev
-      #- libvorbis-dev
+      - libopenal-dev
+      - libluajit-5.1-dev
+      - libjsoncpp-dev
+      - libsndio-dev
 
 apps:
   matematicasuperpiatta:
