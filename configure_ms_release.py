@@ -136,14 +136,6 @@ class Configuration:
                 pre, _ = line.split("=")
                 lines[i] = pre + '= "' + self.os + '"\n'
         Configuration.write_file(path, lines)
-
-        path = os.path.join(self.project_root, "minetest.conf")
-        lines = Configuration.read_file(path)
-        for i, line in enumerate(lines):
-            if 'debug_log_level =' in line:
-                dl = 0 if self.os == 'linux' else 3
-                lines[i] = "debug_log_level = " + str(dl) + "\n"
-        Configuration.write_file(path, lines)
         return True
     
     def update_dev_phase(self):
