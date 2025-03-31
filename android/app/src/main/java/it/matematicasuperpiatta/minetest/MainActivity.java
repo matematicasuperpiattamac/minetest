@@ -18,7 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-package net.minetest.minetest;
+package it.matematicasuperpiatta.minetest;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -35,7 +35,7 @@ import android.widget.Toast;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 
-import static net.minetest.minetest.UnzipService.*;
+import static it.matematicasuperpiatta.minetest.UnzipService.*;
 
 public class MainActivity extends AppCompatActivity {
 	private final static int versionCode = BuildConfig.VERSION_CODE;

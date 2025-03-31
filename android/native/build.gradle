@@ -4,7 +4,7 @@ apply plugin: 'de.undercouch.download'
 import org.gradle.internal.os.OperatingSystem
 
 android {
-	namespace = "net.minetest"
+	namespace = "it.matematicasuperpiatta"
 	compileSdk 34
 	ndkVersion "$ndk_version"
 	defaultConfig {

@@ -18,7 +18,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-package net.minetest.minetest;
+package it.matematicasuperpiatta.minetest;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -45,10 +45,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 public class UnzipService extends IntentService {
-	public static final String ACTION_UPDATE = "net.minetest.minetest.UPDATE";
-	public static final String ACTION_PROGRESS = "net.minetest.minetest.PROGRESS";
-	public static final String ACTION_PROGRESS_MESSAGE = "net.minetest.minetest.PROGRESS_MESSAGE";
-	public static final String ACTION_FAILURE = "net.minetest.minetest.FAILURE";
+	public static final String ACTION_UPDATE = "it.matematicasuperpiatta.minetest.UPDATE";
+	public static final String ACTION_PROGRESS = "it.matematicasuperpiatta.minetest.PROGRESS";
+	public static final String ACTION_PROGRESS_MESSAGE = "it.matematicasuperpiatta.minetest.PROGRESS_MESSAGE";
+	public static final String ACTION_FAILURE = "it.matematicasuperpiatta.minetest.FAILURE";
 	public static final int SUCCESS = -1;
 	public static final int FAILURE = -2;
 	public static final int INDETERMINATE = -3;
@@ -66,7 +66,7 @@ public class UnzipService extends IntentService {
 	}
 
 	public UnzipService() {
-		super("net.minetest.minetest.UnzipService");
+		super("it.matematicasuperpiatta.minetest.UnzipService");
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class UnzipService extends IntentService {
 	}
 
 	private Notification.Builder createNotification() {
-		String name = "net.minetest.minetest";
+		String name = "it.matematicasuperpiatta.minetest";
 		String channelId = "Minetest channel";
 		String description = "notifications from Minetest";
 		Notification.Builder builder;

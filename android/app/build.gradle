@@ -54,7 +54,7 @@ android {
 		sourceCompatibility JavaVersion.VERSION_11
 		targetCompatibility JavaVersion.VERSION_11
 	}
-	namespace 'net.minetest.minetest'
+	namespace 'it.matematicasuperpiatta.minetest'
 }
 
 task prepareAssets() {
