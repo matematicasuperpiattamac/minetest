@@ -140,7 +140,7 @@ class Configuration:
         path = os.path.join(self.project_root, "minetest.conf")
         lines = Configuration.read_file(path)
         for i, line in enumerate(lines):
-            if len(line) >= 14 and line[:14] == 'node_highlighting =':
+            if 'node_highlighting =' in line:
                 pre, _ = line.split("=")
                 post = "box" if self.os == "android" else "halo"
                 lines[i] = pre + '= ' + post + '\n'
