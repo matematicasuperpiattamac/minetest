@@ -18,7 +18,7 @@ class Configuration:
         self.project_root = "."
 
         ########## EDIT ##########
-        self.version = '1.2.0'
+        self.version = '1.2.1'
         self.api = 'release'
         self.os = 'windows'
         self.dev_phase = 'release'
@@ -135,6 +135,15 @@ class Configuration:
             if 'global_os =' in line:
                 pre, _ = line.split("=")
                 lines[i] = pre + '= "' + self.os + '"\n'
+        Configuration.write_file(path, lines)
+
+        path = os.path.join(self.project_root, "minetest.conf")
+        lines = Configuration.read_file(path)
+        for i, line in enumerate(lines):
+            if len(line) >= 14 and line[:14] == 'node_highlighting =':
+                pre, _ = line.split("=")
+                post = "box" if self.os == "android" else "halo"
+                lines[i] = pre + '= ' + post + '\n'
         Configuration.write_file(path, lines)
         return True
     
