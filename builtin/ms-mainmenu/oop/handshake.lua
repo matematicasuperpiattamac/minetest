@@ -160,26 +160,29 @@ function Handshake:launchpad()
 			end
 
 			-- Check Version
-			local pending = jsonRes["client_update"]["pending"]
-			local required = jsonRes["client_update"]["required"]
-			if required then
-				core.log("warning", "Update required")
-
-				local error_dlg = create_required_version_dlg()
-				ui.cleanup()
-				error_dlg:show()
-				ui.update()
-
-				lambda_error = true
-				return true
-			else
-				if pending then
-					core.log("warning", "Update pending")
-					local error_dlg = create_pending_version_dlg()
+			if not global_version_checked then
+				local pending = jsonRes["client_update"]["pending"]
+				local required = jsonRes["client_update"]["required"]
+				global_data.message_text = jsonRes["client_update"]["message"]
+				global_version_checked = true
+				
+				if required then
+					core.log("warning", "Update required")
+					local error_dlg = create_required_version_dlg()
 					ui.cleanup()
 					error_dlg:show()
 					ui.update()
+					lambda_error = true
 					return true
+				else
+					if pending then
+						core.log("warning", "Update pending")
+						local error_dlg = create_pending_version_dlg()
+						ui.cleanup()
+						error_dlg:show()
+						ui.update()
+						return true
+					end
 				end
 			end
 
