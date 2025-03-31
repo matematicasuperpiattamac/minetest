@@ -121,7 +121,7 @@ Compiling
 
 - [Compiling on GNU/Linux](doc/compiling/linux.md)
 - [Compiling on Windows](doc/compiling/windows.md)
-- [Compiling on MacOS](doc/compiling/macos.md)
+- [Compiling on MacOS](doc/compiling/macos_pkg.md)
 
 Docker
 ------
