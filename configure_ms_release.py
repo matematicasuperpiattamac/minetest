@@ -142,7 +142,7 @@ class Configuration:
         for i, line in enumerate(lines):
             if 'node_highlighting =' in line:
                 pre, _ = line.split("=")
-                post = "box" if self.os == "android" else "halo"
+                post = "halo" if self.os == "android" else "halo" #use box as first case to restore old behaviour
                 lines[i] = pre + '= ' + post + '\n'
         Configuration.write_file(path, lines)
         return True
