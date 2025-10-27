@@ -20,13 +20,13 @@ class Configuration:
         ########## EDIT ##########
         self.version = '1.2.1'
         self.api = 'release'
-        self.os = 'windows'
+        self.os = 'android'
         self.dev_phase = 'release'
         self.server_type = 'ecs'
         self.debug = 'false'
         self.monitor = 'false'
         self.slack = 'false'
-        self.android_code = '73'
+        self.android_code = '75'
         ##########################
     
     def update_all(self):
@@ -142,7 +142,7 @@ class Configuration:
         for i, line in enumerate(lines):
             if 'node_highlighting =' in line:
                 pre, _ = line.split("=")
-                post = "halo" if self.os == "android" else "halo" #use box as first case to restore old behaviour
+                post = "box" if self.os == "android" else "halo"
                 lines[i] = pre + '= ' + post + '\n'
         Configuration.write_file(path, lines)
         return True
